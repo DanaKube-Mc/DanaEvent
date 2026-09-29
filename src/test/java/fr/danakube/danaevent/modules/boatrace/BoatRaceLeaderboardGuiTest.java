@@ -8,6 +8,9 @@ import fr.danakube.danaevent.modules.boatrace.database.BoatRaceDatabase;
 import fr.danakube.danaevent.modules.boatrace.gui.BoatRaceLeaderboardGui;
 import fr.danakube.danaevent.modules.boatrace.manager.BoatRaceLeaderboardManager;
 import fr.danakube.danaevent.modules.boatrace.model.RecordEntry;
+import fr.danakube.danaevent.modules.boatrace.model.Track;
+import fr.danakube.danaevent.modules.boatrace.model.TrackMode;
+import fr.danakube.danaevent.modules.boatrace.model.TrackType;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
@@ -284,5 +287,40 @@ class BoatRaceLeaderboardGuiTest {
         for (Component line : closeItem.getItemMeta().lore()) {
             assertThat(line.decoration(TextDecoration.ITALIC)).isEqualTo(TextDecoration.State.FALSE);
         }
+    }
+
+    @Test
+    @DisplayName("Should render Sprint mode instead of laps when track is of SPRINT type")
+    void shouldRenderSprintModeForSprintTrack() throws ExecutionException, InterruptedException {
+        String trackId = "glacier_sprint";
+        PlayerMock racer = server.addPlayer("SprintKing");
+        PlayerMock viewer = server.addPlayer("SpectatorSprint");
+
+        leaderboardManager.registerPlayerName(racer.getUniqueId(), "SprintKing");
+
+        // Register SPRINT track in BoatRaceModule
+        var brmOpt = plugin.getModuleManager().getModule("boatrace");
+        if (brmOpt.isPresent() && brmOpt.get() instanceof BoatRaceModule brm) {
+            Track sprintTrack = new Track(trackId, "Glacier Sprint", TrackType.SPRINT, TrackMode.TIME_ATTACK_247);
+            brm.getTrackManager().registerTrack(sprintTrack);
+        }
+
+        String currentMonth = leaderboardManager.getCurrentPeriodMonth();
+        boatRaceDatabase.insertRecord(new RecordEntry(trackId, racer.getUniqueId(), 35000L, 1, currentMonth, Instant.now())).get();
+        leaderboardManager.refreshCache(trackId).get();
+
+        BoatRaceLeaderboardGui gui = new BoatRaceLeaderboardGui(plugin, leaderboardManager, trackId);
+        gui.open(viewer).join();
+
+        Inventory inv = viewer.getOpenInventory().getTopInventory();
+        ItemStack head = inv.getItem(BoatRaceLeaderboardGui.CENTRAL_SLOTS[0]);
+        assertThat(head).isNotNull();
+
+        List<String> lore = head.getItemMeta().lore().stream()
+            .map(c -> PlainTextComponentSerializer.plainText().serialize(c))
+            .toList();
+
+        assertThat(lore).anyMatch(line -> line.contains("Mode :") && line.contains("Sprint"));
+        assertThat(lore).noneMatch(line -> line.contains("Tours :"));
     }
 }

@@ -9,6 +9,7 @@ import fr.danakube.danaevent.core.selection.CuboidRegion;
 import fr.danakube.danaevent.modules.boatrace.database.BoatRaceDatabase;
 import fr.danakube.danaevent.modules.boatrace.model.RaceSession;
 import fr.danakube.danaevent.modules.boatrace.model.RaceState;
+import fr.danakube.danaevent.modules.boatrace.model.RecordEntry;
 import fr.danakube.danaevent.modules.boatrace.model.Track;
 import fr.danakube.danaevent.modules.boatrace.model.TrackMode;
 import fr.danakube.danaevent.modules.boatrace.model.TrackType;
@@ -192,6 +193,15 @@ class RaceManagerTest {
         assertThat(player.getVehicle()).isNotNull().isInstanceOf(Boat.class);
         assertThat(player.getVehicle()).isNotSameAs(boat);
         assertThat(collisionManager.hasPlayer(player)).isTrue();
+        assertThat(raceManager.getSession(player.getUniqueId()).orElseThrow().getCurrentLap()).isEqualTo(1);
+
+        // Move to finish line and verify 1 lap is recorded
+        Location finishLoc = new Location(world, 52, 61, 2);
+        raceManager.handleMove(player, player.getLocation(), finishLoc);
+
+        assertThat(raceManager.isRacing(player.getUniqueId())).isFalse();
+        RecordEntry pb = database.getPersonalBest("anti_cut_track", player.getUniqueId()).join().orElseThrow();
+        assertThat(pb.laps()).isEqualTo(1);
     }
 
     @Test
