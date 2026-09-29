@@ -131,7 +131,7 @@ public class RaceSession {
 
     public void resetLaps() {
         this.lapTimes.clear();
-        this.currentLap = 0;
+        this.currentLap = 1;
         this.lastLapCrossingMillis = 0L;
     }
 

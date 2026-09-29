@@ -130,4 +130,21 @@ class RaceSessionTest {
         assertThatThrownBy(() -> new RaceSession(UUID.randomUUID(), null, null, System.currentTimeMillis(), RaceState.RACING))
             .isInstanceOf(NullPointerException.class);
     }
+
+    @Test
+    @DisplayName("resetLaps should clear lap times and reset currentLap to 1")
+    void shouldResetLapsToFirstLap() {
+        UUID playerUuid = UUID.randomUUID();
+        Track track = new Track("speedway", "Speedway", TrackType.CIRCUIT_LAPS, TrackMode.TIME_ATTACK_247);
+        RaceSession session = new RaceSession(playerUuid, track, null, 1000L, RaceState.RACING);
+        session.setCurrentLap(3);
+        session.recordLap(20000L);
+        session.setLastLapCrossingMillis(5000L);
+
+        session.resetLaps();
+
+        assertThat(session.getCurrentLap()).isEqualTo(1);
+        assertThat(session.getLapTimes()).isEmpty();
+        assertThat(session.getLastLapCrossingMillis()).isEqualTo(0L);
+    }
 }

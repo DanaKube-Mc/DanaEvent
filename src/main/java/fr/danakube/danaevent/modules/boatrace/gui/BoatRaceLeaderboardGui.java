@@ -2,8 +2,11 @@ package fr.danakube.danaevent.modules.boatrace.gui;
 
 import fr.danakube.danaevent.DanaEventPlugin;
 import fr.danakube.danaevent.core.gui.CustomGui;
+import fr.danakube.danaevent.modules.boatrace.BoatRaceModule;
 import fr.danakube.danaevent.modules.boatrace.manager.BoatRaceLeaderboardManager;
 import fr.danakube.danaevent.modules.boatrace.model.RecordEntry;
+import fr.danakube.danaevent.modules.boatrace.model.Track;
+import fr.danakube.danaevent.modules.boatrace.model.TrackType;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Bukkit;
@@ -230,6 +233,15 @@ public class BoatRaceLeaderboardGui {
     }
 
     private void renderRecords(List<RecordEntry> records) {
+        Track track = null;
+        if (plugin != null && plugin.getModuleManager() != null) {
+            var modOpt = plugin.getModuleManager().getModule("boatrace");
+            if (modOpt.isPresent() && modOpt.get() instanceof BoatRaceModule brm && brm.getTrackManager() != null) {
+                track = brm.getTrackManager().getTrack(trackId).orElse(null);
+            }
+        }
+        boolean isSprint = track != null && track.getType() == TrackType.SPRINT;
+
         int count = Math.min(records.size(), CENTRAL_SLOTS.length);
         for (int i = 0; i < count; i++) {
             RecordEntry record = records.get(i);
@@ -260,7 +272,11 @@ public class BoatRaceLeaderboardGui {
 
             List<Component> lore = new ArrayList<>();
             lore.add(CustomGui.textWithoutItalic("<gray>Temps : </gray><green>" + record.formatTime() + "</green>"));
-            lore.add(CustomGui.textWithoutItalic("<gray>Tours : </gray><white>" + record.laps() + " tour" + (record.laps() > 1 ? "s" : "") + "</white>"));
+            if (isSprint) {
+                lore.add(CustomGui.textWithoutItalic("<gray>Mode : </gray><yellow>Sprint</yellow>"));
+            } else {
+                lore.add(CustomGui.textWithoutItalic("<gray>Tours : </gray><white>" + record.laps() + " tour" + (record.laps() > 1 ? "s" : "") + "</white>"));
+            }
             lore.add(CustomGui.textWithoutItalic("<gray>Date : </gray><dark_gray>" + DATE_FORMATTER.format(record.createdAt()) + "</dark_gray>"));
             lore.add(CustomGui.textWithoutItalic("<gray>Période : </gray><aqua>" + record.periodMonth() + "</aqua>"));
 
