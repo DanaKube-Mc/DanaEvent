@@ -42,10 +42,12 @@ class DanaEventPluginTest {
         assertThat(plugin.getMessageManager()).isNotNull();
         assertThat(plugin.getPlayerStateManager()).isNotNull();
         assertThat(plugin.getSelectionManager()).isNotNull();
+        assertThat(plugin.getModuleManager()).isNotNull();
+        assertThat(plugin.getCommandManager()).isNotNull();
     }
 
     @Test
-    @DisplayName("Plugin should cleanly shut down DatabaseManager when disabled")
+    @DisplayName("Plugin should cleanly shut down DatabaseManager and modules when disabled")
     void shouldShutdownDatabaseManagerOnDisable() {
         DatabaseManager dbManager = plugin.getDatabaseManager();
         assertThat(dbManager).isNotNull();
@@ -59,5 +61,7 @@ class DanaEventPluginTest {
         assertThat(plugin.getMessageManager()).isNull();
         assertThat(plugin.getPlayerStateManager()).isNull();
         assertThat(plugin.getSelectionManager()).isNull();
+        assertThat(plugin.getModuleManager()).isNull();
+        assertThat(plugin.getCommandManager()).isNull();
     }
 }

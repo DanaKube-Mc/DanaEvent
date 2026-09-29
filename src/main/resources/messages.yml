@@ -13,6 +13,8 @@ no-permission: "<prefix> <red>Vous n'avez pas la permission d'exécuter cette co
 player-only: "<prefix> <red>Cette commande ne peut être exécutée que par un joueur.</red>"
 reload-success: "<prefix> <green>Configuration et messages rechargés avec succès !</green>"
 module-not-found: "<prefix> <red>Le module <yellow><module></yellow> est introuvable.</red>"
+module-disabled: "<prefix> <red>Le module <yellow><module></yellow> est actuellement désactivé.</red>"
+command-unknown: "<prefix> <red>Sous-commande inconnue. Utilisez <yellow>/de help</yellow> pour afficher l'aide.</red>"
 error-generic: "<prefix> <red>Une erreur est survenue lors de l'exécution.</red>"
 
 # État des joueurs et récupération d'urgence (Crash recovery)
@@ -23,4 +25,3 @@ wand-given: "<prefix> <green>Vous avez reçu le bâton de sélection !</green>"
 wand-pos1-set: "<prefix> <green>Position 1 définie en <yellow><x>, <y>, <z></yellow> (<aqua><world></aqua>).</green>"
 wand-pos2-set: "<prefix> <green>Position 2 définie en <yellow><x>, <y>, <z></yellow> (<aqua><world></aqua>).</green>"
 wand-volume: "<prefix> <gray>Zone sélectionnée : <yellow><volume></yellow> blocs (<white><width_x>x<height_y>x<width_z></white>).</gray>"
-
