@@ -57,7 +57,26 @@ public class RaceManager {
      * @param track the track to race on
      * @return true if started successfully, false otherwise
      */
+    /**
+     * Starts a race session for a player on a track using the track's default boat material.
+     *
+     * @param player the player participating
+     * @param track the track to race on
+     * @return true if started successfully, false otherwise
+     */
     public boolean startRace(Player player, Track track) {
+        return startRace(player, track, null);
+    }
+
+    /**
+     * Starts a race session for a player on a track using an optional preferred boat material.
+     *
+     * @param player the player participating
+     * @param track the track to race on
+     * @param preferredMaterial optional boat material preference (falls back to track boat if null)
+     * @return true if started successfully, false otherwise
+     */
+    public boolean startRace(Player player, Track track, Material preferredMaterial) {
         if (player == null || track == null || !track.isReady()) {
             return false;
         }
@@ -78,7 +97,8 @@ public class RaceManager {
         player.teleport(spawnLoc);
 
         // 3. Spawn boat and mount player
-        Boat boat = spawnBoat(spawnLoc, track.getBoatMaterial());
+        Material materialToSpawn = preferredMaterial != null ? preferredMaterial : track.getBoatMaterial();
+        Boat boat = spawnBoat(spawnLoc, materialToSpawn);
         boat.addPassenger(player);
 
         // 4. Configure collisions

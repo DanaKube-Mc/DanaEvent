@@ -89,7 +89,24 @@ public class BoatRaceJoinCmd implements SubCommand {
             return;
         }
 
-        boolean started = module.getRaceManager().startRace(player, track);
+        if (module.getBoatSkinManager() != null && !module.getBoatSkinManager().hasPreference(player.getUniqueId())) {
+            // First time: prompt player with boat selection GUI then start race
+            fr.danakube.danaevent.modules.boatrace.gui.BoatSelectionGui gui =
+                new fr.danakube.danaevent.modules.boatrace.gui.BoatSelectionGui(plugin, module.getBoatSkinManager(), chosenBoat -> {
+                    boolean started = module.getRaceManager().startRace(player, track, chosenBoat);
+                    if (!started) {
+                        plugin.getMessageManager().sendMessage(player, "error-generic");
+                    }
+                });
+            gui.open(player);
+            return;
+        }
+
+        org.bukkit.Material preferredBoat = (module.getBoatSkinManager() != null)
+            ? module.getBoatSkinManager().getPreferredBoat(player)
+            : track.getBoatMaterial();
+
+        boolean started = module.getRaceManager().startRace(player, track, preferredBoat);
         if (!started) {
             plugin.getMessageManager().sendMessage(player, "error-generic");
         }
