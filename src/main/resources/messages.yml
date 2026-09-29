@@ -14,3 +14,6 @@ player-only: "<prefix> <red>Cette commande ne peut être exécutée que par un j
 reload-success: "<prefix> <green>Configuration et messages rechargés avec succès !</green>"
 module-not-found: "<prefix> <red>Le module <yellow><module></yellow> est introuvable.</red>"
 error-generic: "<prefix> <red>Une erreur est survenue lors de l'exécution.</red>"
+
+# État des joueurs et récupération d'urgence (Crash recovery)
+crash-recovery-restored: "<prefix> <green>Votre inventaire et votre état ont été restaurés avec succès après une interruption.</green>"
