@@ -189,8 +189,9 @@ class BoatRaceLeaderboardGuiTest {
 
     @Test
     @DisplayName("Should close inventory when clicking close button")
-    void shouldCloseInventoryOnCloseButtonClick() {
+    void shouldCloseInventoryOnCloseButtonClick() throws ExecutionException, InterruptedException {
         PlayerMock player = server.addPlayer("Clicker");
+        leaderboardManager.refreshCache("test_track").get();
         BoatRaceLeaderboardGui gui = new BoatRaceLeaderboardGui(plugin, leaderboardManager, "test_track");
         gui.open(player).join();
 

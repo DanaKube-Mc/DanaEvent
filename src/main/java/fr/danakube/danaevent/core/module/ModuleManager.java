@@ -18,6 +18,7 @@ public class ModuleManager {
 
     private final JavaPlugin plugin;
     private final Map<String, DanaModule> modules = Collections.synchronizedMap(new LinkedHashMap<>());
+    private final Map<String, String> moduleAliases = new ConcurrentHashMap<>();
     private final Map<String, ModuleStatus> statuses = new ConcurrentHashMap<>();
 
     public ModuleManager(JavaPlugin plugin) {
@@ -39,25 +40,52 @@ public class ModuleManager {
 
         modules.put(id, module);
         statuses.put(id, module.isEnabled() ? ModuleStatus.ENABLED : ModuleStatus.DISABLED);
+
+        if (module.getAliases() != null) {
+            for (String alias : module.getAliases()) {
+                if (alias != null && !alias.isBlank()) {
+                    moduleAliases.put(alias.toLowerCase(), id);
+                }
+            }
+        }
+
         plugin.getLogger().info("Module '" + module.getName() + "' (id: " + id + ", v" + module.getVersion() + ") registered.");
     }
 
     /**
-     * Enables a module by id with fault isolation.
+     * Resolves a module identifier from either its id or registered alias.
      *
-     * @param id module identifier
+     * @param idOrAlias module id or alias
+     * @return resolved primary module id, or null if unresolved
+     */
+    public String resolveModuleId(String idOrAlias) {
+        if (idOrAlias == null) {
+            return null;
+        }
+        String lower = idOrAlias.toLowerCase();
+        if (modules.containsKey(lower)) {
+            return lower;
+        }
+        return moduleAliases.get(lower);
+    }
+
+    /**
+     * Enables a module by id or alias with fault isolation.
+     *
+     * @param id module identifier or alias
      * @return true if enabled successfully, false otherwise
      */
     public boolean enableModule(String id) {
-        if (id == null) {
+        String resolvedId = resolveModuleId(id);
+        if (resolvedId == null) {
             return false;
         }
-        DanaModule module = modules.get(id.toLowerCase());
+        DanaModule module = modules.get(resolvedId);
         if (module == null) {
             return false;
         }
 
-        if (module.isEnabled() && statuses.get(id.toLowerCase()) == ModuleStatus.ENABLED) {
+        if (module.isEnabled() && statuses.get(resolvedId) == ModuleStatus.ENABLED) {
             return true;
         }
 
@@ -79,16 +107,17 @@ public class ModuleManager {
     }
 
     /**
-     * Disables a module by id.
+     * Disables a module by id or alias.
      *
-     * @param id module identifier
+     * @param id module identifier or alias
      * @return true if disabled or already disabled, false if not found
      */
     public boolean disableModule(String id) {
-        if (id == null) {
+        String resolvedId = resolveModuleId(id);
+        if (resolvedId == null) {
             return false;
         }
-        DanaModule module = modules.get(id.toLowerCase());
+        DanaModule module = modules.get(resolvedId);
         if (module == null) {
             return false;
         }
@@ -106,16 +135,17 @@ public class ModuleManager {
     }
 
     /**
-     * Reloads a module by id with fault isolation.
+     * Reloads a module by id or alias with fault isolation.
      *
-     * @param id module identifier
+     * @param id module identifier or alias
      * @return true if reloaded successfully, false otherwise
      */
     public boolean reloadModule(String id) {
-        if (id == null) {
+        String resolvedId = resolveModuleId(id);
+        if (resolvedId == null) {
             return false;
         }
-        DanaModule module = modules.get(id.toLowerCase());
+        DanaModule module = modules.get(resolvedId);
         if (module == null) {
             return false;
         }
@@ -172,16 +202,17 @@ public class ModuleManager {
     }
 
     /**
-     * Retrieves a module by identifier.
+     * Retrieves a module by identifier or alias.
      *
-     * @param id module identifier (case-insensitive)
+     * @param id module identifier or alias (case-insensitive)
      * @return Optional containing the module if registered
      */
     public Optional<DanaModule> getModule(String id) {
-        if (id == null) {
+        String resolvedId = resolveModuleId(id);
+        if (resolvedId == null) {
             return Optional.empty();
         }
-        return Optional.ofNullable(modules.get(id.toLowerCase()));
+        return Optional.ofNullable(modules.get(resolvedId));
     }
 
     /**
@@ -205,13 +236,14 @@ public class ModuleManager {
     }
 
     /**
-     * @param id module identifier (case-insensitive)
+     * @param id module identifier or alias (case-insensitive)
      * @return current lifecycle status of the module
      */
     public ModuleStatus getModuleStatus(String id) {
-        if (id == null) {
+        String resolvedId = resolveModuleId(id);
+        if (resolvedId == null) {
             return ModuleStatus.DISABLED;
         }
-        return statuses.getOrDefault(id.toLowerCase(), ModuleStatus.DISABLED);
+        return statuses.getOrDefault(resolvedId, ModuleStatus.DISABLED);
     }
 }
