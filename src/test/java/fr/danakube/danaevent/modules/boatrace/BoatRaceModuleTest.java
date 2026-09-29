@@ -71,9 +71,10 @@ class BoatRaceModuleTest {
         assertThat(module.getHudTask().isCancelled()).isFalse();
 
         assertThat(plugin.getBoatRaceLeaderboardManager()).isSameAs(module.getLeaderboardManager());
+        assertThat(module.getBoatSkinManager()).isNotNull();
 
         List<String> subCommandNames = module.getSubCommands().stream().map(SubCommand::getName).toList();
-        assertThat(subCommandNames).containsExactlyInAnyOrder("list", "join", "leave", "top", "admin");
+        assertThat(subCommandNames).containsExactlyInAnyOrder("list", "join", "leave", "top", "boat", "admin");
     }
 
     @Test

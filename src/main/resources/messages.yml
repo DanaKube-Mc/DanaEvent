@@ -49,4 +49,10 @@ boatrace-admin-event-started: "<prefix> <green>Événement lancé sur le circuit
 boatrace-admin-event-stopped: "<prefix> <red>Événement arrêté sur le circuit <yellow><track></yellow>.</red>"
 boatrace-admin-ranking-reset: "<prefix> <green>Classement réinitialisé pour le circuit <yellow><track></yellow> (<period>). <deleted> enregistrements supprimés.</green>"
 
+# Cosmétiques et Choix du Bateau
+boatrace-boat-selected: "<prefix> <green>Vous avez sélectionné le bateau <yellow><boat></yellow> !</green>"
+boatrace-boat-locked: "<prefix> <red>Ce bateau est verrouillé. Vous n'avez pas la permission requise.</red>"
+boatrace-boat-gui-title: "<gradient:#00c6ff:#0072ff><b>Choix du Bateau</b></gradient>"
+
+
 

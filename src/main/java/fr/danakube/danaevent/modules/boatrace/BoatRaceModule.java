@@ -40,6 +40,8 @@ public class BoatRaceModule extends AbstractDanaModule {
     private BoatMoveListener moveListener;
     private BoatDismountListener dismountListener;
     private BoatProtectionListener protectionListener;
+    private fr.danakube.danaevent.modules.boatrace.manager.BoatSkinManager boatSkinManager;
+    private fr.danakube.danaevent.modules.boatrace.listener.BoatRacePlayerListener playerListener;
 
     public BoatRaceModule(DanaEventPlugin plugin) {
         super("boatrace", List.of("br"), "Course de Bateaux", "1.0.0");
@@ -60,6 +62,9 @@ public class BoatRaceModule extends AbstractDanaModule {
         this.trackManager = new TrackManager(plugin);
         this.trackManager.loadTracks();
 
+        this.boatSkinManager = new fr.danakube.danaevent.modules.boatrace.manager.BoatSkinManager(plugin, database);
+        this.boatSkinManager.loadBoatsConfig();
+
         this.collisionManager = new CollisionManager();
         this.raceManager = new RaceManager(plugin, database, collisionManager);
         this.leaderboardManager = new BoatRaceLeaderboardManager(plugin, database);
@@ -69,10 +74,12 @@ public class BoatRaceModule extends AbstractDanaModule {
         this.moveListener = new BoatMoveListener(raceManager);
         this.dismountListener = new BoatDismountListener(raceManager);
         this.protectionListener = new BoatProtectionListener(raceManager);
+        this.playerListener = new fr.danakube.danaevent.modules.boatrace.listener.BoatRacePlayerListener(boatSkinManager);
 
         Bukkit.getPluginManager().registerEvents(moveListener, plugin);
         Bukkit.getPluginManager().registerEvents(dismountListener, plugin);
         Bukkit.getPluginManager().registerEvents(protectionListener, plugin);
+        Bukkit.getPluginManager().registerEvents(playerListener, plugin);
 
         this.hudTask = new RaceHudTask(raceManager);
         this.hudTask.runTaskTimer(plugin, 0L, 2L);
@@ -82,6 +89,7 @@ public class BoatRaceModule extends AbstractDanaModule {
             registerSubCommand(new BoatRaceJoinCmd(plugin, this));
             registerSubCommand(new BoatRaceLeaveCmd(plugin, this));
             registerSubCommand(new BoatRaceTopCmd(plugin, this));
+            registerSubCommand(new fr.danakube.danaevent.modules.boatrace.command.BoatRaceBoatCmd(plugin, this));
             registerSubCommand(new BoatRaceAdminCmd(plugin, this));
         }
     }
@@ -101,6 +109,11 @@ public class BoatRaceModule extends AbstractDanaModule {
 
         if (collisionManager != null) {
             collisionManager.cleanUp();
+        }
+
+        if (boatSkinManager != null) {
+            boatSkinManager.cleanUp();
+            boatSkinManager = null;
         }
 
         if (leaderboardManager != null) {
@@ -123,6 +136,10 @@ public class BoatRaceModule extends AbstractDanaModule {
             HandlerList.unregisterAll(protectionListener);
             protectionListener = null;
         }
+        if (playerListener != null) {
+            HandlerList.unregisterAll(playerListener);
+            playerListener = null;
+        }
     }
 
     @Override
@@ -134,6 +151,9 @@ public class BoatRaceModule extends AbstractDanaModule {
                     leaderboardManager.refreshCache(track.getId());
                 }
             }
+        }
+        if (boatSkinManager != null) {
+            boatSkinManager.loadBoatsConfig();
         }
     }
 
@@ -163,5 +183,9 @@ public class BoatRaceModule extends AbstractDanaModule {
 
     public RaceHudTask getHudTask() {
         return hudTask;
+    }
+
+    public fr.danakube.danaevent.modules.boatrace.manager.BoatSkinManager getBoatSkinManager() {
+        return boatSkinManager;
     }
 }

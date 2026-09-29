@@ -193,4 +193,27 @@ class BoatRaceDatabaseTest {
         assertThat(deletedAll).isEqualTo(1);
         assertThat(boatRaceDatabase.getTopAllTime(trackId, 10).get()).isEmpty();
     }
+
+    @Test
+    @DisplayName("Should persist and update player boat preference")
+    void shouldPersistAndUpdatePlayerBoatPreference() throws ExecutionException, InterruptedException {
+        UUID playerUuid = UUID.randomUUID();
+
+        // Initially empty
+        var prefBefore = boatRaceDatabase.getPlayerBoatPreference(playerUuid).get();
+        assertThat(prefBefore).isEmpty();
+
+        // Set preference to SPRUCE_BOAT
+        boatRaceDatabase.setPlayerBoatPreference(playerUuid, org.bukkit.Material.SPRUCE_BOAT).get();
+
+        var prefAfter = boatRaceDatabase.getPlayerBoatPreference(playerUuid).get();
+        assertThat(prefAfter).contains(org.bukkit.Material.SPRUCE_BOAT);
+
+        // Update preference to BAMBOO_RAFT (upsert on duplicate key)
+        boatRaceDatabase.setPlayerBoatPreference(playerUuid, org.bukkit.Material.BAMBOO_RAFT).get();
+
+        var prefUpdated = boatRaceDatabase.getPlayerBoatPreference(playerUuid).get();
+        assertThat(prefUpdated).contains(org.bukkit.Material.BAMBOO_RAFT);
+    }
 }
+
