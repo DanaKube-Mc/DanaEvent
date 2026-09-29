@@ -243,6 +243,7 @@ public class HuntProgressManager {
                                             );
                                         }
                                         member.playSound(member.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.2f);
+                                        fr.danakube.danaevent.modules.treasurehunt.display.NightcoreStyleHud.sendObjectiveCompletedTitle(member);
                                     }
                                 }
                                 break;
@@ -253,6 +254,7 @@ public class HuntProgressManager {
                             plugin.getMessageManager().sendMessage(player, "hunt-step-completed");
                         }
                         player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.2f);
+                        fr.danakube.danaevent.modules.treasurehunt.display.NightcoreStyleHud.sendObjectiveCompletedTitle(player);
                     }
                 } else if (result == StepValidationResult.HUNT_COMPLETED) {
                     String formattedTime = progress.formatElapsedTime();
@@ -270,6 +272,7 @@ public class HuntProgressManager {
                                             );
                                         }
                                         member.playSound(member.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0f, 1.0f);
+                                        fr.danakube.danaevent.modules.treasurehunt.display.NightcoreStyleHud.sendHuntCompletedTitle(member, formattedTime);
                                     }
                                 }
                                 break;
@@ -284,6 +287,7 @@ public class HuntProgressManager {
                             );
                         }
                         player.playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0f, 1.0f);
+                        fr.danakube.danaevent.modules.treasurehunt.display.NightcoreStyleHud.sendHuntCompletedTitle(player, formattedTime);
                     }
                 }
             });
