@@ -13,13 +13,19 @@ import java.util.Objects;
 public abstract class AbstractDanaModule implements DanaModule {
 
     private final String id;
+    private final List<String> aliases;
     private final String name;
     private final String version;
     private final List<SubCommand> subCommands = new ArrayList<>();
     private boolean enabled;
 
     protected AbstractDanaModule(String id, String name, String version) {
+        this(id, List.of(), name, version);
+    }
+
+    protected AbstractDanaModule(String id, List<String> aliases, String name, String version) {
         this.id = Objects.requireNonNull(id, "Module id cannot be null").toLowerCase();
+        this.aliases = aliases != null ? aliases.stream().filter(Objects::nonNull).map(String::toLowerCase).toList() : List.of();
         this.name = Objects.requireNonNull(name, "Module name cannot be null");
         this.version = Objects.requireNonNull(version, "Module version cannot be null");
         this.enabled = false;
@@ -28,6 +34,11 @@ public abstract class AbstractDanaModule implements DanaModule {
     @Override
     public String getId() {
         return id;
+    }
+
+    @Override
+    public List<String> getAliases() {
+        return aliases;
     }
 
     @Override

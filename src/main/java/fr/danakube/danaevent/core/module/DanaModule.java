@@ -15,6 +15,13 @@ public interface DanaModule {
     String getId();
 
     /**
+     * @return list of aliases for this module (e.g. "br" for "boatrace")
+     */
+    default List<String> getAliases() {
+        return List.of();
+    }
+
+    /**
      * @return display name of the module
      */
     String getName();

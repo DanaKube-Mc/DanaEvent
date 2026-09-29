@@ -12,6 +12,8 @@ import fr.danakube.danaevent.core.player.PlayerCrashRecoveryListener;
 import fr.danakube.danaevent.core.player.PlayerStateManager;
 import fr.danakube.danaevent.core.selection.SelectionManager;
 import fr.danakube.danaevent.core.selection.WandListener;
+import fr.danakube.danaevent.modules.boatrace.BoatRaceModule;
+import fr.danakube.danaevent.modules.boatrace.manager.BoatRaceLeaderboardManager;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -29,6 +31,7 @@ public class DanaEventPlugin extends JavaPlugin {
     private CommandManager commandManager;
     private HookManager hookManager;
     private GuiManager guiManager;
+    private BoatRaceLeaderboardManager boatRaceLeaderboardManager;
 
     @Override
     public void onEnable() {
@@ -65,6 +68,7 @@ public class DanaEventPlugin extends JavaPlugin {
         );
 
         this.moduleManager = new ModuleManager(this);
+        this.moduleManager.registerModule(new BoatRaceModule(this));
         this.commandManager = new CommandManager(this);
 
         this.hookManager = new HookManager(this);
@@ -93,6 +97,12 @@ public class DanaEventPlugin extends JavaPlugin {
             guiManager.cleanUp();
             guiManager = null;
         }
+
+        if (boatRaceLeaderboardManager != null) {
+            boatRaceLeaderboardManager.cleanUp();
+            boatRaceLeaderboardManager = null;
+        }
+        BoatRaceLeaderboardManager.setInstance(null);
 
         if (hookManager != null) {
             hookManager.cleanUp();
@@ -164,5 +174,13 @@ public class DanaEventPlugin extends JavaPlugin {
 
     public GuiManager getGuiManager() {
         return guiManager;
+    }
+
+    public BoatRaceLeaderboardManager getBoatRaceLeaderboardManager() {
+        return boatRaceLeaderboardManager;
+    }
+
+    public void setBoatRaceLeaderboardManager(BoatRaceLeaderboardManager boatRaceLeaderboardManager) {
+        this.boatRaceLeaderboardManager = boatRaceLeaderboardManager;
     }
 }
