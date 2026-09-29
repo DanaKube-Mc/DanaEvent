@@ -82,6 +82,7 @@ public class DanaEventPlugin extends JavaPlugin {
 
         this.moduleManager = new ModuleManager(this);
         this.moduleManager.registerModule(new BoatRaceModule(this));
+        this.moduleManager.registerModule(new fr.danakube.danaevent.modules.treasurehunt.TreasureHuntModule(this));
         this.commandManager = new CommandManager(this);
 
         this.hookManager = new HookManager(this);
@@ -281,5 +282,9 @@ public class DanaEventPlugin extends JavaPlugin {
 
     public fr.danakube.danaevent.core.team.manager.TeamScoreManager getTeamScoreManager() {
         return teamScoreManager;
+    }
+
+    public fr.danakube.danaevent.modules.treasurehunt.TreasureHuntModule getTreasureHuntModule() {
+        return moduleManager != null ? (fr.danakube.danaevent.modules.treasurehunt.TreasureHuntModule) moduleManager.getModule("treasurehunt").orElse(null) : null;
     }
 }

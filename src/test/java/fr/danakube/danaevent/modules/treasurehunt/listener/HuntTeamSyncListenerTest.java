@@ -51,6 +51,9 @@ class HuntTeamSyncListenerTest {
     void setUp() throws Exception {
         server = MockBukkit.mock();
         plugin = MockBukkit.load(DanaEventPlugin.class);
+        if (plugin.getTreasureHuntModule() != null) {
+            plugin.getTreasureHuntModule().onDisable();
+        }
         teamManager = plugin.getTeamManager();
 
         File configFile = new File(tempDir.toFile(), "hunts.yml");
