@@ -555,4 +555,75 @@ public class TeamDatabase {
             return results;
         }, asyncExecutor);
     }
+
+    /**
+     * Asynchronously calculates the sum of all scores for a team in a specific event and period.
+     *
+     * @param teamId team identifier
+     * @param eventType event type identifier
+     * @param periodMonth period month key
+     * @return CompletableFuture containing the accumulated score
+     */
+    public CompletableFuture<Double> getTeamTotalScore(
+        @NotNull String teamId,
+        @NotNull String eventType,
+        @NotNull String periodMonth
+    ) {
+        Objects.requireNonNull(teamId, "teamId cannot be null");
+        Objects.requireNonNull(eventType, "eventType cannot be null");
+        Objects.requireNonNull(periodMonth, "periodMonth cannot be null");
+
+        return CompletableFuture.supplyAsync(() -> {
+            String sql = """
+                SELECT COALESCE(SUM(score_value), 0.0) AS total_score
+                FROM dana_team_scores
+                WHERE team_id = ? AND event_type = ? AND period_month = ?;
+            """;
+
+            try (Connection connection = databaseManager.getDataSource().getConnection();
+                 PreparedStatement statement = connection.prepareStatement(sql)) {
+
+                statement.setString(1, teamId);
+                statement.setString(2, eventType);
+                statement.setString(3, periodMonth);
+
+                try (ResultSet rs = statement.executeQuery()) {
+                    if (rs.next()) {
+                        return rs.getDouble("total_score");
+                    }
+                }
+            } catch (SQLException e) {
+                throw new CompletionException(e);
+            }
+            return 0.0;
+        }, asyncExecutor);
+    }
+
+    /**
+     * Asynchronously deletes scores for an event and period.
+     *
+     * @param eventType event type identifier
+     * @param periodMonth period month key
+     * @return CompletableFuture containing the number of deleted records
+     */
+    public CompletableFuture<Integer> resetTeamScores(
+        @NotNull String eventType,
+        @NotNull String periodMonth
+    ) {
+        Objects.requireNonNull(eventType, "eventType cannot be null");
+        Objects.requireNonNull(periodMonth, "periodMonth cannot be null");
+
+        return CompletableFuture.supplyAsync(() -> {
+            String sql = "DELETE FROM dana_team_scores WHERE event_type = ? AND period_month = ?;";
+            try (Connection connection = databaseManager.getDataSource().getConnection();
+                 PreparedStatement statement = connection.prepareStatement(sql)) {
+
+                statement.setString(1, eventType);
+                statement.setString(2, periodMonth);
+                return statement.executeUpdate();
+            } catch (SQLException e) {
+                throw new CompletionException(e);
+            }
+        }, asyncExecutor);
+    }
 }
