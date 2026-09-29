@@ -80,6 +80,30 @@ public class BoatRaceDatabase {
     }
 
     /**
+     * Asynchronously saves a new race record entry into the database.
+     *
+     * @param record the record to persist
+     * @return CompletableFuture completing when inserted
+     */
+    public CompletableFuture<Void> saveRecord(RecordEntry record) {
+        return insertRecord(record);
+    }
+
+    /**
+     * Asynchronously saves a new race record entry into the database by parameters.
+     *
+     * @param trackId track identifier
+     * @param playerUuid player UUID
+     * @param timeMillis elapsed race time in ms
+     * @param laps laps completed
+     * @return CompletableFuture completing when inserted
+     */
+    public CompletableFuture<Void> saveRecord(String trackId, UUID playerUuid, long timeMillis, int laps) {
+        String periodMonth = java.time.YearMonth.now().toString();
+        return insertRecord(new RecordEntry(trackId, playerUuid, timeMillis, laps, periodMonth, Instant.now()));
+    }
+
+    /**
      * Asynchronously inserts a new race record entry into the database.
      *
      * @param record the record to persist

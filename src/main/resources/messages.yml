@@ -25,3 +25,11 @@ wand-given: "<prefix> <green>Vous avez reçu le bâton de sélection !</green>"
 wand-pos1-set: "<prefix> <green>Position 1 définie en <yellow><x>, <y>, <z></yellow> (<aqua><world></aqua>).</green>"
 wand-pos2-set: "<prefix> <green>Position 2 définie en <yellow><x>, <y>, <z></yellow> (<aqua><world></aqua>).</green>"
 wand-volume: "<prefix> <gray>Zone sélectionnée : <yellow><volume></yellow> blocs (<white><width_x>x<height_y>x<width_z></white>).</gray>"
+
+# Module BoatRace
+boatrace-start: "<prefix> <green>C'est parti ! Foncez vers la ligne d'arrivée !</green>"
+boatrace-lap: "<prefix> <green>Tour <yellow><lap></yellow>/<yellow><total_laps></yellow> complété en <aqua><time></aqua> !</green>"
+boatrace-finish: "<prefix> <gold>Course terminée !</gold> Temps final : <yellow><time></yellow> !"
+boatrace-anti-cut: "<prefix> <red><b>Anti-Cut !</b> Vous avez quitté votre bateau, votre course est annulée !</red>"
+boatrace-cancelled: "<prefix> <red>Course annulée : <yellow><reason></yellow></red>"
+
