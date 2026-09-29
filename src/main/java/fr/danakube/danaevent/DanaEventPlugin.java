@@ -13,6 +13,9 @@ import fr.danakube.danaevent.core.player.PlayerCrashRecoveryListener;
 import fr.danakube.danaevent.core.player.PlayerStateManager;
 import fr.danakube.danaevent.core.selection.SelectionManager;
 import fr.danakube.danaevent.core.selection.WandListener;
+import fr.danakube.danaevent.core.team.database.TeamDatabase;
+import fr.danakube.danaevent.core.team.listener.TeamConnectionListener;
+import fr.danakube.danaevent.core.team.manager.TeamManager;
 import fr.danakube.danaevent.modules.boatrace.BoatRaceModule;
 import fr.danakube.danaevent.modules.boatrace.manager.BoatRaceLeaderboardManager;
 import org.bukkit.command.CommandExecutor;
@@ -35,6 +38,8 @@ public class DanaEventPlugin extends JavaPlugin {
     private HookManager hookManager;
     private GuiManager guiManager;
     private BoatRaceLeaderboardManager boatRaceLeaderboardManager;
+    private TeamDatabase teamDatabase;
+    private TeamManager teamManager;
 
     @Override
     public void onEnable() {
@@ -100,6 +105,19 @@ public class DanaEventPlugin extends JavaPlugin {
             }
         }
 
+        try {
+            this.teamDatabase = new TeamDatabase(this.databaseManager);
+            this.teamDatabase.initTables();
+            this.teamManager = new TeamManager(this, this.teamDatabase);
+            this.teamManager.loadAllTeams();
+            getServer().getPluginManager().registerEvents(
+                new TeamConnectionListener(this.teamManager),
+                this
+            );
+        } catch (SQLException e) {
+            getLogger().log(Level.SEVERE, "Failed to initialize Team Service database!", e);
+        }
+
         this.moduleManager.enableAll();
 
         getLogger().info("DanaEvent Core enabled successfully.");
@@ -107,6 +125,12 @@ public class DanaEventPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (teamManager != null) {
+            teamManager.cleanUp();
+            teamManager = null;
+        }
+        teamDatabase = null;
+
         if (guiManager != null) {
             guiManager.cleanUp();
             guiManager = null;
@@ -196,5 +220,13 @@ public class DanaEventPlugin extends JavaPlugin {
 
     public void setBoatRaceLeaderboardManager(BoatRaceLeaderboardManager boatRaceLeaderboardManager) {
         this.boatRaceLeaderboardManager = boatRaceLeaderboardManager;
+    }
+
+    public TeamDatabase getTeamDatabase() {
+        return teamDatabase;
+    }
+
+    public TeamManager getTeamManager() {
+        return teamManager;
     }
 }

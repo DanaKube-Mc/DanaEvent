@@ -62,5 +62,26 @@ boatrace-hud-current: "<prefix> <gray>Votre affichage du chrono actuel : <aqua><
 boatrace-hud-updated: "<prefix> <green>Votre affichage du chrono a été réglé sur : <aqua><hud_type></aqua>.</green>"
 boatrace-hud-invalid: "<prefix> <red>Mode d'affichage invalide. Choisissez parmi : <yellow>bossbar</yellow>, <yellow>actionbar</yellow>, ou <yellow>both</yellow>.</red>"
 
-
-
+# Service d'Équipes (Team Service)
+team-created: "<prefix> <green>L'équipe <team> a été créée avec succès !</green>"
+team-disbanded: "<prefix> <red>L'équipe <team> a été dissoute.</red>"
+team-color-changed: "<prefix> <green>La couleur de votre équipe a été modifiée en <color> !</green>"
+team-color-taken: "<prefix> <red>La couleur <color> est déjà utilisée par une autre équipe.</red>"
+team-already-in-team: "<prefix> <red>Vous faites déjà partie d'une équipe (<team>).</red>"
+team-not-in-team: "<prefix> <red>Vous ne faites partie d'aucune équipe.</red>"
+team-not-leader: "<prefix> <red>Seul le chef d'équipe peut effectuer cette action.</red>"
+team-player-already-in-team: "<prefix> <red>Le joueur <player> fait déjà partie d'une équipe.</red>"
+team-invite-sent: "<prefix> <green>Invitation envoyée à <yellow><player></yellow> (expire dans 60 secondes).</green>"
+team-invite-received: "<prefix> <yellow><player></yellow> vous a invité à rejoindre l'équipe <team> ! <click:run_command:'/de team accept <team_id>'><green><b>[ACCEPTER]</b></green></click> <click:run_command:'/de team decline <team_id>'><red><b>[REFUSER]</b></red></click>"
+team-invite-accepted: "<prefix> <green><player> a rejoint l'équipe !</green>"
+team-invite-declined: "<prefix> <red><player> a refusé l'invitation de l'équipe.</red>"
+team-invite-expired: "<prefix> <red>Cette invitation a expiré.</red>"
+team-invite-not-found: "<prefix> <red>Aucune invitation en attente pour cette équipe.</red>"
+team-kicked: "<prefix> <red>Vous avez été expulsé de l'équipe <team>.</red>"
+team-member-kicked: "<prefix> <yellow><player></yellow> a été expulsé de l'équipe."
+team-left: "<prefix> <gray>Vous avez quitté l'équipe <team>.</gray>"
+team-member-left: "<prefix> <yellow><player></yellow> a quitté l'équipe."
+team-leader-left-disbanded: "<prefix> <red>Le chef d'équipe a quitté l'équipe, elle a donc été dissoute.</red>"
+team-not-found: "<prefix> <red>L'équipe demandée est introuvable.</red>"
+team-id-invalid: "<prefix> <red>L'identifiant d'équipe est invalide (3 à 32 caractères alphanumériques et tirets).</red>"
+team-id-taken: "<prefix> <red>Une équipe avec cet identifiant existe déjà.</red>"
