@@ -207,10 +207,11 @@ public class RaceManager {
         }
 
         // Persist record to database asynchronously and update caches if available
+        int lapsToRecord = session.getTrack().getType() == TrackType.SPRINT ? 1 : Math.max(1, session.getCurrentLap());
         if (plugin != null && plugin.getBoatRaceLeaderboardManager() != null) {
-            plugin.getBoatRaceLeaderboardManager().recordTime(session.getTrack().getId(), session.getPlayerUuid(), totalTime, session.getCurrentLap());
+            plugin.getBoatRaceLeaderboardManager().recordTime(session.getTrack().getId(), session.getPlayerUuid(), totalTime, lapsToRecord);
         } else {
-            database.saveRecord(session.getTrack().getId(), session.getPlayerUuid(), totalTime, session.getCurrentLap());
+            database.saveRecord(session.getTrack().getId(), session.getPlayerUuid(), totalTime, lapsToRecord);
         }
 
         // Destroy boat
