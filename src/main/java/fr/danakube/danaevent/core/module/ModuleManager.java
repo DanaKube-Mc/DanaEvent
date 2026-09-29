@@ -194,6 +194,17 @@ public class ModuleManager {
     }
 
     /**
+     * @return collection of currently enabled modules
+     */
+    public Collection<DanaModule> getEnabledModules() {
+        synchronized (modules) {
+            return modules.values().stream()
+                .filter(m -> statuses.get(m.getId().toLowerCase()) == ModuleStatus.ENABLED)
+                .toList();
+        }
+    }
+
+    /**
      * @param id module identifier (case-insensitive)
      * @return current lifecycle status of the module
      */

@@ -44,6 +44,8 @@ class DanaEventPluginTest {
         assertThat(plugin.getSelectionManager()).isNotNull();
         assertThat(plugin.getModuleManager()).isNotNull();
         assertThat(plugin.getCommandManager()).isNotNull();
+        assertThat(plugin.getHookManager()).isNotNull();
+        assertThat(plugin.getGuiManager()).isNotNull();
     }
 
     @Test
@@ -63,5 +65,7 @@ class DanaEventPluginTest {
         assertThat(plugin.getSelectionManager()).isNull();
         assertThat(plugin.getModuleManager()).isNull();
         assertThat(plugin.getCommandManager()).isNull();
+        assertThat(plugin.getHookManager()).isNull();
+        assertThat(plugin.getGuiManager()).isNull();
     }
 }

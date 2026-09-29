@@ -30,6 +30,7 @@ dependencies {
 
     // Optional Hooks (compileOnly)
     compileOnly("me.clip:placeholderapi:2.11.6")
+    testCompileOnly("me.clip:placeholderapi:2.11.6")
 
     // Testing Stack (TDD)
     testImplementation(platform("org.junit:junit-bom:5.11.0"))
