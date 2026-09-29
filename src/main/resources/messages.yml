@@ -17,3 +17,10 @@ error-generic: "<prefix> <red>Une erreur est survenue lors de l'exécution.</red
 
 # État des joueurs et récupération d'urgence (Crash recovery)
 crash-recovery-restored: "<prefix> <green>Votre inventaire et votre état ont été restaurés avec succès après une interruption.</green>"
+
+# Outil de Sélection (Wand)
+wand-given: "<prefix> <green>Vous avez reçu le bâton de sélection !</green>"
+wand-pos1-set: "<prefix> <green>Position 1 définie en <yellow><x>, <y>, <z></yellow> (<aqua><world></aqua>).</green>"
+wand-pos2-set: "<prefix> <green>Position 2 définie en <yellow><x>, <y>, <z></yellow> (<aqua><world></aqua>).</green>"
+wand-volume: "<prefix> <gray>Zone sélectionnée : <yellow><volume></yellow> blocs (<white><width_x>x<height_y>x<width_z></white>).</gray>"
+
