@@ -13,6 +13,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -189,5 +190,30 @@ class CustomGuiTest {
 
         gui.onClose(player);
         assertThat(closed.get()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Should create components and items with explicit non-italic decoration")
+    void shouldCreateNonItalicComponentsAndItems() {
+        Component noItalic = CustomGui.textWithoutItalic("<green>Test Item</green>");
+        assertThat(noItalic.decoration(net.kyori.adventure.text.format.TextDecoration.ITALIC))
+            .isEqualTo(net.kyori.adventure.text.format.TextDecoration.State.FALSE);
+
+        ItemStack item = CustomGui.createItem(
+            Material.DIAMOND,
+            "<gold>Item Name</gold>",
+            List.of("<gray>Lore line 1</gray>", "<yellow>Lore line 2</yellow>")
+        );
+
+        assertThat(item.getItemMeta()).isNotNull();
+        assertThat(item.getItemMeta().displayName().decoration(net.kyori.adventure.text.format.TextDecoration.ITALIC))
+            .isEqualTo(net.kyori.adventure.text.format.TextDecoration.State.FALSE);
+
+        List<Component> lore = item.getItemMeta().lore();
+        assertThat(lore).hasSize(2);
+        assertThat(lore.get(0).decoration(net.kyori.adventure.text.format.TextDecoration.ITALIC))
+            .isEqualTo(net.kyori.adventure.text.format.TextDecoration.State.FALSE);
+        assertThat(lore.get(1).decoration(net.kyori.adventure.text.format.TextDecoration.ITALIC))
+            .isEqualTo(net.kyori.adventure.text.format.TextDecoration.State.FALSE);
     }
 }

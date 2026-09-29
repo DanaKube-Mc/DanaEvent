@@ -6,6 +6,7 @@ import be.seeseemelk.mockbukkit.entity.PlayerMock;
 import fr.danakube.danaevent.DanaEventPlugin;
 import fr.danakube.danaevent.modules.boatrace.manager.BoatSkinManager;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Material;
 import org.bukkit.event.inventory.InventoryClickEvent;
@@ -212,5 +213,53 @@ class BoatSelectionGuiTest {
 
         assertThat(boatSkinManager.getPreference(player.getUniqueId())).isEqualTo(Material.BAMBOO_RAFT);
         assertThat(callbackReceived.get()).isEqualTo(Material.BAMBOO_RAFT);
+    }
+
+    @Test
+    @DisplayName("Should suppress default italics on all GUI items, buttons, and lore lines")
+    void shouldSuppressDefaultItalicsOnAllItemsAndLore() {
+        PlayerMock player = server.addPlayer("NonItalicTester");
+        boatSkinManager.setPreference(player.getUniqueId(), Material.OAK_BOAT);
+
+        BoatSelectionGui gui = new BoatSelectionGui(plugin, boatSkinManager);
+        gui.open(player);
+
+        var inv = player.getOpenInventory().getTopInventory();
+
+        // 1. Close button
+        ItemStack closeBtn = inv.getItem(BoatSelectionGui.CLOSE_SLOT);
+        assertThat(closeBtn).isNotNull();
+        assertThat(closeBtn.getItemMeta().displayName().decoration(TextDecoration.ITALIC))
+            .isEqualTo(TextDecoration.State.FALSE);
+        for (Component line : closeBtn.getItemMeta().lore()) {
+            assertThat(line.decoration(TextDecoration.ITALIC)).isEqualTo(TextDecoration.State.FALSE);
+        }
+
+        // 2. Active Boat Item (slot 11: OAK_BOAT)
+        ItemStack oakBoat = inv.getItem(11);
+        assertThat(oakBoat).isNotNull();
+        assertThat(oakBoat.getItemMeta().displayName().decoration(TextDecoration.ITALIC))
+            .isEqualTo(TextDecoration.State.FALSE);
+        for (Component line : oakBoat.getItemMeta().lore()) {
+            assertThat(line.decoration(TextDecoration.ITALIC)).isEqualTo(TextDecoration.State.FALSE);
+        }
+
+        // 3. Inactive Unlocked Boat Item (slot 12: SPRUCE_BOAT)
+        ItemStack spruceBoat = inv.getItem(12);
+        assertThat(spruceBoat).isNotNull();
+        assertThat(spruceBoat.getItemMeta().displayName().decoration(TextDecoration.ITALIC))
+            .isEqualTo(TextDecoration.State.FALSE);
+        for (Component line : spruceBoat.getItemMeta().lore()) {
+            assertThat(line.decoration(TextDecoration.ITALIC)).isEqualTo(TextDecoration.State.FALSE);
+        }
+
+        // 4. Locked Boat Item (slot 13: BAMBOO_RAFT)
+        ItemStack bambooRaft = inv.getItem(13);
+        assertThat(bambooRaft).isNotNull();
+        assertThat(bambooRaft.getItemMeta().displayName().decoration(TextDecoration.ITALIC))
+            .isEqualTo(TextDecoration.State.FALSE);
+        for (Component line : bambooRaft.getItemMeta().lore()) {
+            assertThat(line.decoration(TextDecoration.ITALIC)).isEqualTo(TextDecoration.State.FALSE);
+        }
     }
 }

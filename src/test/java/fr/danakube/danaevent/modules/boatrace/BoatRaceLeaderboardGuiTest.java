@@ -8,6 +8,8 @@ import fr.danakube.danaevent.modules.boatrace.database.BoatRaceDatabase;
 import fr.danakube.danaevent.modules.boatrace.gui.BoatRaceLeaderboardGui;
 import fr.danakube.danaevent.modules.boatrace.manager.BoatRaceLeaderboardManager;
 import fr.danakube.danaevent.modules.boatrace.model.RecordEntry;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Material;
 import org.bukkit.event.inventory.ClickType;
@@ -209,5 +211,78 @@ class BoatRaceLeaderboardGuiTest {
 
         // Player's top inventory should no longer be the GUI
         assertThat(player.getOpenInventory().getTopInventory()).isNotSameAs(gui.getCustomGui().getInventory());
+    }
+
+    @Test
+    @DisplayName("Should render only best time per player and suppress default italics across all GUI items and lore")
+    void shouldRenderOnlyBestTimePerPlayerAndSuppressDefaultItalics() throws ExecutionException, InterruptedException {
+        String trackId = "dedup_track";
+        PlayerMock racer1 = server.addPlayer("MultiRacer1");
+        PlayerMock racer2 = server.addPlayer("MultiRacer2");
+        PlayerMock viewer = server.addPlayer("Viewer");
+
+        leaderboardManager.registerPlayerName(racer1.getUniqueId(), "MultiRacer1");
+        leaderboardManager.registerPlayerName(racer2.getUniqueId(), "MultiRacer2");
+
+        String currentMonth = leaderboardManager.getCurrentPeriodMonth();
+
+        // Racer1 has 3 runs in current month: 80s, 50s (PB), 70s
+        boatRaceDatabase.insertRecord(new RecordEntry(trackId, racer1.getUniqueId(), 80000L, 3, currentMonth, Instant.now())).get();
+        boatRaceDatabase.insertRecord(new RecordEntry(trackId, racer1.getUniqueId(), 50000L, 3, currentMonth, Instant.now())).get();
+        boatRaceDatabase.insertRecord(new RecordEntry(trackId, racer1.getUniqueId(), 70000L, 3, currentMonth, Instant.now())).get();
+
+        // Racer2 has 2 runs in current month: 60s, 55s (PB)
+        boatRaceDatabase.insertRecord(new RecordEntry(trackId, racer2.getUniqueId(), 60000L, 3, currentMonth, Instant.now())).get();
+        boatRaceDatabase.insertRecord(new RecordEntry(trackId, racer2.getUniqueId(), 55000L, 3, currentMonth, Instant.now())).get();
+
+        leaderboardManager.refreshCache(trackId).get();
+
+        BoatRaceLeaderboardGui gui = new BoatRaceLeaderboardGui(plugin, leaderboardManager, trackId);
+        gui.open(viewer).join();
+
+        Inventory inv = viewer.getOpenInventory().getTopInventory();
+
+        // Exactly 2 players should appear in central slots (slot 10: Racer1 at 50s, slot 11: Racer2 at 55s)
+        ItemStack slot10 = inv.getItem(BoatRaceLeaderboardGui.CENTRAL_SLOTS[0]);
+        ItemStack slot11 = inv.getItem(BoatRaceLeaderboardGui.CENTRAL_SLOTS[1]);
+        ItemStack slot12 = inv.getItem(BoatRaceLeaderboardGui.CENTRAL_SLOTS[2]);
+
+        assertThat(slot10).isNotNull();
+        assertThat(slot10.getType()).isEqualTo(Material.PLAYER_HEAD);
+        assertThat(PlainTextComponentSerializer.plainText().serialize(slot10.getItemMeta().displayName()))
+            .contains("#1").contains("MultiRacer1");
+
+        assertThat(slot11).isNotNull();
+        assertThat(slot11.getType()).isEqualTo(Material.PLAYER_HEAD);
+        assertThat(PlainTextComponentSerializer.plainText().serialize(slot11.getItemMeta().displayName()))
+            .contains("#2").contains("MultiRacer2");
+
+        // Third central slot MUST be empty because each player only has 1 record
+        assertThat(slot12).isNull();
+
+        // Verify non-italic styling on player head #1
+        assertThat(slot10.getItemMeta().displayName().decoration(TextDecoration.ITALIC))
+            .isEqualTo(TextDecoration.State.FALSE);
+        for (Component line : slot10.getItemMeta().lore()) {
+            assertThat(line.decoration(TextDecoration.ITALIC)).isEqualTo(TextDecoration.State.FALSE);
+        }
+
+        // Verify non-italic styling on filter button
+        ItemStack filterItem = inv.getItem(BoatRaceLeaderboardGui.FILTER_SLOT);
+        assertThat(filterItem).isNotNull();
+        assertThat(filterItem.getItemMeta().displayName().decoration(TextDecoration.ITALIC))
+            .isEqualTo(TextDecoration.State.FALSE);
+        for (Component line : filterItem.getItemMeta().lore()) {
+            assertThat(line.decoration(TextDecoration.ITALIC)).isEqualTo(TextDecoration.State.FALSE);
+        }
+
+        // Verify non-italic styling on close button
+        ItemStack closeItem = inv.getItem(BoatRaceLeaderboardGui.CLOSE_SLOT);
+        assertThat(closeItem).isNotNull();
+        assertThat(closeItem.getItemMeta().displayName().decoration(TextDecoration.ITALIC))
+            .isEqualTo(TextDecoration.State.FALSE);
+        for (Component line : closeItem.getItemMeta().lore()) {
+            assertThat(line.decoration(TextDecoration.ITALIC)).isEqualTo(TextDecoration.State.FALSE);
+        }
     }
 }

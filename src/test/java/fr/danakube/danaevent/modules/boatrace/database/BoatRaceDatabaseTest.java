@@ -112,7 +112,7 @@ class BoatRaceDatabaseTest {
     }
 
     @Test
-    @DisplayName("Should query getTopAllTime across all periods ordered ascending")
+    @DisplayName("Should query getTopAllTime keeping only the best time per player ordered ascending")
     void shouldRetrieveTopAllTimeAcrossPeriods() throws ExecutionException, InterruptedException {
         String trackId = "canyon_drift";
         UUID player1 = UUID.randomUUID();
@@ -125,10 +125,37 @@ class BoatRaceDatabaseTest {
         boatRaceDatabase.insertRecord(new RecordEntry("other_track", player2, 40000L, 3, "2026-09", now)).get();
 
         List<RecordEntry> allTime = boatRaceDatabase.getTopAllTime(trackId, 10).get();
-        assertThat(allTime).hasSize(3);
+        assertThat(allTime).hasSize(2);
+        assertThat(allTime.get(0).playerUuid()).isEqualTo(player1);
         assertThat(allTime.get(0).timeMillis()).isEqualTo(60000L);
+        assertThat(allTime.get(1).playerUuid()).isEqualTo(player2);
         assertThat(allTime.get(1).timeMillis()).isEqualTo(75000L);
-        assertThat(allTime.get(2).timeMillis()).isEqualTo(90000L);
+    }
+
+    @Test
+    @DisplayName("Should keep only single best time per player in getTopMonthly")
+    void shouldDeduplicatePlayerBestTimesInTopMonthly() throws ExecutionException, InterruptedException {
+        String trackId = "glacier_run";
+        String period = "2026-09";
+        UUID p1 = UUID.randomUUID();
+        UUID p2 = UUID.randomUUID();
+        Instant now = Instant.now().truncatedTo(ChronoUnit.SECONDS);
+
+        // Player 1 has 3 runs in same month: 80s, 55s, 65s -> best is 55s
+        boatRaceDatabase.insertRecord(new RecordEntry(trackId, p1, 80000L, 3, period, now)).get();
+        boatRaceDatabase.insertRecord(new RecordEntry(trackId, p1, 55000L, 3, period, now)).get();
+        boatRaceDatabase.insertRecord(new RecordEntry(trackId, p1, 65000L, 3, period, now)).get();
+
+        // Player 2 has 2 runs in same month: 70s, 60s -> best is 60s
+        boatRaceDatabase.insertRecord(new RecordEntry(trackId, p2, 70000L, 3, period, now)).get();
+        boatRaceDatabase.insertRecord(new RecordEntry(trackId, p2, 60000L, 3, period, now)).get();
+
+        List<RecordEntry> top = boatRaceDatabase.getTopMonthly(trackId, period, 10).get();
+        assertThat(top).hasSize(2);
+        assertThat(top.get(0).playerUuid()).isEqualTo(p1);
+        assertThat(top.get(0).timeMillis()).isEqualTo(55000L);
+        assertThat(top.get(1).playerUuid()).isEqualTo(p2);
+        assertThat(top.get(1).timeMillis()).isEqualTo(60000L);
     }
 
     @Test
