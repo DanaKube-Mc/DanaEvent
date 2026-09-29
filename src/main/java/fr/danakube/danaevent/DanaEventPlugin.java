@@ -44,6 +44,7 @@ public class DanaEventPlugin extends JavaPlugin {
     private fr.danakube.danaevent.core.team.manager.TeamVisualManager teamVisualManager;
     private fr.danakube.danaevent.core.team.listener.TeamFriendlyFireListener teamFriendlyFireListener;
     private fr.danakube.danaevent.core.team.listener.TeamVisualListener teamVisualListener;
+    private fr.danakube.danaevent.core.team.manager.TeamScoreManager teamScoreManager;
 
     @Override
     public void onEnable() {
@@ -114,6 +115,7 @@ public class DanaEventPlugin extends JavaPlugin {
             this.teamDatabase.initTables();
             this.teamScoreboardManager = new fr.danakube.danaevent.core.team.manager.TeamScoreboardManager();
             this.teamVisualManager = new fr.danakube.danaevent.core.team.manager.TeamVisualManager();
+            this.teamScoreManager = new fr.danakube.danaevent.core.team.manager.TeamScoreManager(this, this.teamDatabase);
             this.teamManager = new TeamManager(this, this.teamDatabase);
             this.teamManager.setScoreboardManager(this.teamScoreboardManager);
             this.teamManager.loadAllTeams();
@@ -144,6 +146,7 @@ public class DanaEventPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        teamScoreManager = null;
         if (teamScoreboardManager != null) {
             teamScoreboardManager.cleanUp();
             teamScoreboardManager = null;
@@ -271,5 +274,9 @@ public class DanaEventPlugin extends JavaPlugin {
 
     public fr.danakube.danaevent.core.team.listener.TeamVisualListener getTeamVisualListener() {
         return teamVisualListener;
+    }
+
+    public fr.danakube.danaevent.core.team.manager.TeamScoreManager getTeamScoreManager() {
+        return teamScoreManager;
     }
 }
