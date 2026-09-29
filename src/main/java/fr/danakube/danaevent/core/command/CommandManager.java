@@ -156,10 +156,13 @@ public class CommandManager implements CommandExecutor, TabCompleter {
                 }
             }
 
-            // 2. Suggest active modules
+            // 2. Suggest active modules and aliases
             for (DanaModule mod : plugin.getModuleManager().getModules()) {
                 if (mod.isEnabled()) {
                     completions.add(mod.getId());
+                    if (mod.getAliases() != null) {
+                        completions.addAll(mod.getAliases());
+                    }
                 }
             }
 
@@ -180,7 +183,7 @@ public class CommandManager implements CommandExecutor, TabCompleter {
                 return Collections.emptyList();
             }
 
-            // First arg is Module ID
+            // First arg is Module ID or Alias
             Optional<DanaModule> modOpt = plugin.getModuleManager().getModule(first);
             if (modOpt.isPresent() && modOpt.get().isEnabled()) {
                 DanaModule module = modOpt.get();

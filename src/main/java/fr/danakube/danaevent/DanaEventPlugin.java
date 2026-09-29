@@ -12,7 +12,7 @@ import fr.danakube.danaevent.core.player.PlayerCrashRecoveryListener;
 import fr.danakube.danaevent.core.player.PlayerStateManager;
 import fr.danakube.danaevent.core.selection.SelectionManager;
 import fr.danakube.danaevent.core.selection.WandListener;
-import fr.danakube.danaevent.modules.boatrace.database.BoatRaceDatabase;
+import fr.danakube.danaevent.modules.boatrace.BoatRaceModule;
 import fr.danakube.danaevent.modules.boatrace.manager.BoatRaceLeaderboardManager;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -55,15 +55,6 @@ public class DanaEventPlugin extends JavaPlugin {
             return;
         }
 
-        BoatRaceDatabase boatRaceDatabase = new BoatRaceDatabase(this.databaseManager);
-        try {
-            boatRaceDatabase.initTables();
-        } catch (SQLException e) {
-            getLogger().log(Level.WARNING, "Failed to initialize boatrace database tables: " + e.getMessage(), e);
-        }
-        this.boatRaceLeaderboardManager = new BoatRaceLeaderboardManager(this, boatRaceDatabase);
-        BoatRaceLeaderboardManager.setInstance(this.boatRaceLeaderboardManager);
-
         this.playerStateManager = new PlayerStateManager(this);
         getServer().getPluginManager().registerEvents(
             new PlayerCrashRecoveryListener(this, this.playerStateManager),
@@ -77,6 +68,7 @@ public class DanaEventPlugin extends JavaPlugin {
         );
 
         this.moduleManager = new ModuleManager(this);
+        this.moduleManager.registerModule(new BoatRaceModule(this));
         this.commandManager = new CommandManager(this);
 
         this.hookManager = new HookManager(this);
