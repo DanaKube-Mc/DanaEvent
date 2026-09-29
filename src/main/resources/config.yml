@@ -1,0 +1,21 @@
+# =====================================================================
+#                      DanaEvent - Configuration Principale
+# =====================================================================
+
+database:
+  # Type de stockage : SQLITE, MYSQL, MARIADB
+  # Par défaut: SQLITE (aucune configuration de serveur requise)
+  type: SQLITE
+
+  # Pour SQLite : nom du fichier dans le dossier de données du plugin (plugins/DanaEvent/)
+  # Pour MySQL / MariaDB : nom de la base de données
+  database: "danaevent.db"
+
+  # Paramètres de connexion réseau (utilisés uniquement pour MYSQL et MARIADB)
+  host: "127.0.0.1"
+  port: 3306
+  username: "root"
+  password: ""
+
+  # Nombre maximum de connexions dans le pool HikariCP (défaut: 10)
+  pool-size: 10
