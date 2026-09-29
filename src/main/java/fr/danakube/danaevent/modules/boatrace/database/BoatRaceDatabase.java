@@ -14,9 +14,11 @@ import java.sql.Statement;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
@@ -195,13 +197,19 @@ public class BoatRaceDatabase {
         return CompletableFuture.supplyAsync(() -> {
             String sql = """
                 SELECT id, track_id, player_uuid, time_millis, laps, period_month, created_at
-                FROM dana_boatrace_records
-                WHERE track_id = ? AND period_month = ?
-                ORDER BY time_millis ASC
+                FROM (
+                    SELECT id, track_id, player_uuid, time_millis, laps, period_month, created_at,
+                           ROW_NUMBER() OVER (PARTITION BY player_uuid ORDER BY time_millis ASC, created_at ASC, id ASC) AS rn
+                    FROM dana_boatrace_records
+                    WHERE track_id = ? AND period_month = ?
+                ) ranked
+                WHERE rn = 1
+                ORDER BY time_millis ASC, created_at ASC
                 LIMIT ?;
             """;
 
             List<RecordEntry> records = new ArrayList<>();
+            Set<UUID> seenPlayers = new HashSet<>();
             try (Connection connection = databaseManager.getDataSource().getConnection();
                  PreparedStatement statement = connection.prepareStatement(sql)) {
 
@@ -210,8 +218,11 @@ public class BoatRaceDatabase {
                 statement.setInt(3, effectiveLimit);
 
                 try (ResultSet rs = statement.executeQuery()) {
-                    while (rs.next()) {
-                        records.add(mapResultSetToRecord(rs));
+                    while (rs.next() && records.size() < effectiveLimit) {
+                        RecordEntry entry = mapResultSetToRecord(rs);
+                        if (seenPlayers.add(entry.playerUuid())) {
+                            records.add(entry);
+                        }
                     }
                 }
             } catch (SQLException e) {
@@ -223,7 +234,7 @@ public class BoatRaceDatabase {
 
     /**
      * Asynchronously retrieves the top all-time records for a track across all periods,
-     * ordered by time ascending (fastest first).
+     * ordered by time ascending (fastest first), keeping only the best time per player.
      *
      * @param trackId track identifier
      * @param limit maximum number of records to return
@@ -236,13 +247,19 @@ public class BoatRaceDatabase {
         return CompletableFuture.supplyAsync(() -> {
             String sql = """
                 SELECT id, track_id, player_uuid, time_millis, laps, period_month, created_at
-                FROM dana_boatrace_records
-                WHERE track_id = ?
-                ORDER BY time_millis ASC
+                FROM (
+                    SELECT id, track_id, player_uuid, time_millis, laps, period_month, created_at,
+                           ROW_NUMBER() OVER (PARTITION BY player_uuid ORDER BY time_millis ASC, created_at ASC, id ASC) AS rn
+                    FROM dana_boatrace_records
+                    WHERE track_id = ?
+                ) ranked
+                WHERE rn = 1
+                ORDER BY time_millis ASC, created_at ASC
                 LIMIT ?;
             """;
 
             List<RecordEntry> records = new ArrayList<>();
+            Set<UUID> seenPlayers = new HashSet<>();
             try (Connection connection = databaseManager.getDataSource().getConnection();
                  PreparedStatement statement = connection.prepareStatement(sql)) {
 
@@ -250,8 +267,11 @@ public class BoatRaceDatabase {
                 statement.setInt(2, effectiveLimit);
 
                 try (ResultSet rs = statement.executeQuery()) {
-                    while (rs.next()) {
-                        records.add(mapResultSetToRecord(rs));
+                    while (rs.next() && records.size() < effectiveLimit) {
+                        RecordEntry entry = mapResultSetToRecord(rs);
+                        if (seenPlayers.add(entry.playerUuid())) {
+                            records.add(entry);
+                        }
                     }
                 }
             } catch (SQLException e) {

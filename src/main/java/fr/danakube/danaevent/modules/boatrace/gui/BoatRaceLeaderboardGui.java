@@ -147,7 +147,7 @@ public class BoatRaceLeaderboardGui {
         ItemStack border = new ItemStack(Material.GRAY_STAINED_GLASS_PANE);
         var borderMeta = border.getItemMeta();
         if (borderMeta != null) {
-            borderMeta.displayName(Component.empty());
+            borderMeta.displayName(CustomGui.textWithoutItalic(""));
             border.setItemMeta(borderMeta);
         }
         customGui.fillBorder(border);
@@ -188,8 +188,8 @@ public class BoatRaceLeaderboardGui {
 
         var meta = filterItem.getItemMeta();
         if (meta != null) {
-            meta.displayName(MiniMessage.miniMessage().deserialize(titleStr));
-            meta.lore(loreLines.stream().map(MiniMessage.miniMessage()::deserialize).toList());
+            meta.displayName(CustomGui.textWithoutItalic(titleStr));
+            meta.lore(loreLines.stream().map(CustomGui::textWithoutItalic).toList());
             filterItem.setItemMeta(meta);
         }
 
@@ -203,8 +203,8 @@ public class BoatRaceLeaderboardGui {
         ItemStack closeItem = new ItemStack(Material.BARRIER);
         var meta = closeItem.getItemMeta();
         if (meta != null) {
-            meta.displayName(MiniMessage.miniMessage().deserialize("<red><bold>Fermer</bold></red>"));
-            meta.lore(List.of(MiniMessage.miniMessage().deserialize("<gray>Cliquez pour fermer l'inventaire.</gray>")));
+            meta.displayName(CustomGui.textWithoutItalic("<red><bold>Fermer</bold></red>"));
+            meta.lore(List.of(CustomGui.textWithoutItalic("<gray>Cliquez pour fermer l'inventaire.</gray>")));
             closeItem.setItemMeta(meta);
         }
 
@@ -219,10 +219,10 @@ public class BoatRaceLeaderboardGui {
         ItemStack emptyItem = new ItemStack(Material.SPYGLASS);
         var meta = emptyItem.getItemMeta();
         if (meta != null) {
-            meta.displayName(MiniMessage.miniMessage().deserialize("<red><bold>Aucun record</bold></red>"));
+            meta.displayName(CustomGui.textWithoutItalic("<red><bold>Aucun record</bold></red>"));
             meta.lore(List.of(
-                MiniMessage.miniMessage().deserialize("<gray>Aucun temps n'a été enregistré pour ce classement.</gray>"),
-                MiniMessage.miniMessage().deserialize("<yellow>Soyez le premier à franchir la ligne d'arrivée !</yellow>")
+                CustomGui.textWithoutItalic("<gray>Aucun temps n'a été enregistré pour ce classement.</gray>"),
+                CustomGui.textWithoutItalic("<yellow>Soyez le premier à franchir la ligne d'arrivée !</yellow>")
             ));
             emptyItem.setItemMeta(meta);
         }
@@ -259,13 +259,13 @@ public class BoatRaceLeaderboardGui {
             }
 
             List<Component> lore = new ArrayList<>();
-            lore.add(MiniMessage.miniMessage().deserialize("<gray>Temps : </gray><green>" + record.formatTime() + "</green>"));
-            lore.add(MiniMessage.miniMessage().deserialize("<gray>Tours : </gray><white>" + record.laps() + " tour" + (record.laps() > 1 ? "s" : "") + "</white>"));
-            lore.add(MiniMessage.miniMessage().deserialize("<gray>Date : </gray><dark_gray>" + DATE_FORMATTER.format(record.createdAt()) + "</dark_gray>"));
-            lore.add(MiniMessage.miniMessage().deserialize("<gray>Période : </gray><aqua>" + record.periodMonth() + "</aqua>"));
+            lore.add(CustomGui.textWithoutItalic("<gray>Temps : </gray><green>" + record.formatTime() + "</green>"));
+            lore.add(CustomGui.textWithoutItalic("<gray>Tours : </gray><white>" + record.laps() + " tour" + (record.laps() > 1 ? "s" : "") + "</white>"));
+            lore.add(CustomGui.textWithoutItalic("<gray>Date : </gray><dark_gray>" + DATE_FORMATTER.format(record.createdAt()) + "</dark_gray>"));
+            lore.add(CustomGui.textWithoutItalic("<gray>Période : </gray><aqua>" + record.periodMonth() + "</aqua>"));
 
             if (meta != null) {
-                meta.displayName(MiniMessage.miniMessage().deserialize(rankTitle));
+                meta.displayName(CustomGui.textWithoutItalic(rankTitle));
                 meta.lore(lore);
                 head.setItemMeta(meta);
             }

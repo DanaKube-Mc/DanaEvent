@@ -94,7 +94,7 @@ public class BoatSelectionGui {
         ItemStack border = new ItemStack(Material.GRAY_STAINED_GLASS_PANE);
         ItemMeta borderMeta = border.getItemMeta();
         if (borderMeta != null) {
-            borderMeta.displayName(Component.empty());
+            borderMeta.displayName(CustomGui.textWithoutItalic(""));
             border.setItemMeta(borderMeta);
         }
         customGui.fillBorder(border);
@@ -103,8 +103,8 @@ public class BoatSelectionGui {
         ItemStack closeBtn = new ItemStack(Material.BARRIER);
         ItemMeta closeMeta = closeBtn.getItemMeta();
         if (closeMeta != null) {
-            closeMeta.displayName(MiniMessage.miniMessage().deserialize("<red><bold>Fermer</bold></red>"));
-            closeMeta.lore(List.of(MiniMessage.miniMessage().deserialize("<gray>Cliquez pour fermer l'inventaire.</gray>")));
+            closeMeta.displayName(CustomGui.textWithoutItalic("<red><bold>Fermer</bold></red>"));
+            closeMeta.lore(List.of(CustomGui.textWithoutItalic("<gray>Cliquez pour fermer l'inventaire.</gray>")));
             closeBtn.setItemMeta(closeMeta);
         }
         customGui.setItem(CLOSE_SLOT, closeBtn, event -> player.closeInventory());
@@ -127,21 +127,21 @@ public class BoatSelectionGui {
             ItemMeta meta = boatItem.getItemMeta();
 
             if (meta != null) {
-                meta.displayName(MiniMessage.miniMessage().deserialize(skin.name()));
+                meta.displayName(CustomGui.textWithoutItalic(skin.name()));
 
                 List<Component> lore = new ArrayList<>();
-                lore.add(Component.empty());
+                lore.add(CustomGui.textWithoutItalic(""));
 
                 if (hasPerm) {
                     if (isCurrent) {
-                        lore.add(MiniMessage.miniMessage().deserialize("<green>✔ Bateau Actuel</green>"));
+                        lore.add(CustomGui.textWithoutItalic("<green>✔ Bateau Actuel</green>"));
                         meta.addEnchant(Enchantment.UNBREAKING, 1, true);
                         meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
                     } else {
-                        lore.add(MiniMessage.miniMessage().deserialize("<gray>Cliquez pour choisir ce bateau.</gray>"));
+                        lore.add(CustomGui.textWithoutItalic("<gray>Cliquez pour choisir ce bateau.</gray>"));
                     }
                 } else {
-                    lore.add(MiniMessage.miniMessage().deserialize("<red>🔒 Verrouillé</red>"));
+                    lore.add(CustomGui.textWithoutItalic("<red>🔒 Verrouillé</red>"));
                 }
 
                 meta.lore(lore);
