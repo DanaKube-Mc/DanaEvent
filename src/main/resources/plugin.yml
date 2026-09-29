@@ -7,6 +7,7 @@ description: Core infrastructure and event management engine for DanaKube networ
 
 softdepend:
   - PlaceholderAPI
+  - DecentHolograms
 
 commands:
   danaevent:

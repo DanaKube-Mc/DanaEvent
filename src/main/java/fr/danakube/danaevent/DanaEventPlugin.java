@@ -3,6 +3,9 @@ package fr.danakube.danaevent;
 import fr.danakube.danaevent.core.command.CommandManager;
 import fr.danakube.danaevent.core.database.DatabaseConfig;
 import fr.danakube.danaevent.core.database.DatabaseManager;
+import fr.danakube.danaevent.core.gui.GuiListener;
+import fr.danakube.danaevent.core.gui.GuiManager;
+import fr.danakube.danaevent.core.hook.HookManager;
 import fr.danakube.danaevent.core.message.MessageManager;
 import fr.danakube.danaevent.core.module.ModuleManager;
 import fr.danakube.danaevent.core.player.PlayerCrashRecoveryListener;
@@ -24,6 +27,8 @@ public class DanaEventPlugin extends JavaPlugin {
     private SelectionManager selectionManager;
     private ModuleManager moduleManager;
     private CommandManager commandManager;
+    private HookManager hookManager;
+    private GuiManager guiManager;
 
     @Override
     public void onEnable() {
@@ -62,6 +67,13 @@ public class DanaEventPlugin extends JavaPlugin {
         this.moduleManager = new ModuleManager(this);
         this.commandManager = new CommandManager(this);
 
+        this.hookManager = new HookManager(this);
+        this.guiManager = new GuiManager(this);
+        getServer().getPluginManager().registerEvents(
+            new GuiListener(this.guiManager),
+            this
+        );
+
         PluginCommand danaeventCmd = getCommand("danaevent");
         if (danaeventCmd != null) {
             danaeventCmd.setExecutor(this.commandManager);
@@ -77,6 +89,16 @@ public class DanaEventPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (guiManager != null) {
+            guiManager.cleanUp();
+            guiManager = null;
+        }
+
+        if (hookManager != null) {
+            hookManager.cleanUp();
+            hookManager = null;
+        }
+
         if (moduleManager != null) {
             moduleManager.disableAll();
             moduleManager = null;
@@ -134,5 +156,13 @@ public class DanaEventPlugin extends JavaPlugin {
 
     public CommandManager getCommandManager() {
         return commandManager;
+    }
+
+    public HookManager getHookManager() {
+        return hookManager;
+    }
+
+    public GuiManager getGuiManager() {
+        return guiManager;
     }
 }
