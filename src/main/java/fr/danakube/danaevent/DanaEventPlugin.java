@@ -3,6 +3,8 @@ package fr.danakube.danaevent;
 import fr.danakube.danaevent.core.database.DatabaseConfig;
 import fr.danakube.danaevent.core.database.DatabaseManager;
 import fr.danakube.danaevent.core.message.MessageManager;
+import fr.danakube.danaevent.core.player.PlayerCrashRecoveryListener;
+import fr.danakube.danaevent.core.player.PlayerStateManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.sql.SQLException;
@@ -13,6 +15,7 @@ public class DanaEventPlugin extends JavaPlugin {
     private static DanaEventPlugin instance;
     private DatabaseManager databaseManager;
     private MessageManager messageManager;
+    private PlayerStateManager playerStateManager;
 
     @Override
     public void onEnable() {
@@ -36,11 +39,22 @@ public class DanaEventPlugin extends JavaPlugin {
             return;
         }
 
+        this.playerStateManager = new PlayerStateManager(this);
+        getServer().getPluginManager().registerEvents(
+            new PlayerCrashRecoveryListener(this, this.playerStateManager),
+            this
+        );
+
         getLogger().info("DanaEvent Core enabled successfully.");
     }
 
     @Override
     public void onDisable() {
+        if (playerStateManager != null) {
+            playerStateManager.cleanUp();
+            playerStateManager = null;
+        }
+
         if (databaseManager != null) {
             databaseManager.shutdown();
             databaseManager = null;
@@ -62,5 +76,9 @@ public class DanaEventPlugin extends JavaPlugin {
 
     public MessageManager getMessageManager() {
         return messageManager;
+    }
+
+    public PlayerStateManager getPlayerStateManager() {
+        return playerStateManager;
     }
 }

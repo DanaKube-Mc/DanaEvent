@@ -40,6 +40,7 @@ class DanaEventPluginTest {
         assertThat(dbManager.isRunning()).isTrue();
 
         assertThat(plugin.getMessageManager()).isNotNull();
+        assertThat(plugin.getPlayerStateManager()).isNotNull();
     }
 
     @Test
@@ -55,5 +56,6 @@ class DanaEventPluginTest {
         assertThat(dbManager.getDataSource().isClosed()).isTrue();
         assertThat(DanaEventPlugin.getInstance()).isNull();
         assertThat(plugin.getMessageManager()).isNull();
+        assertThat(plugin.getPlayerStateManager()).isNull();
     }
 }
