@@ -1,0 +1,9 @@
+name: DanaEvent
+version: '${version}'
+main: fr.danakube.danaevent.DanaEventPlugin
+api-version: '1.21'
+author: DanaKube
+description: Core infrastructure and event management engine for DanaKube network.
+
+softdepend:
+  - PlaceholderAPI
