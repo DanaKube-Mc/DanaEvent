@@ -2,6 +2,7 @@ package fr.danakube.danaevent;
 
 import be.seeseemelk.mockbukkit.MockBukkit;
 import be.seeseemelk.mockbukkit.ServerMock;
+import fr.danakube.danaevent.core.database.DatabaseManager;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -22,14 +23,34 @@ class DanaEventPluginTest {
 
     @AfterEach
     void tearDown() {
-        MockBukkit.unmock();
+        if (MockBukkit.isMocked()) {
+            MockBukkit.unmock();
+        }
     }
 
     @Test
-    @DisplayName("Plugin should load and enable properly under MockBukkit")
+    @DisplayName("Plugin should load and enable properly under MockBukkit with DatabaseManager active")
     void shouldLoadAndEnablePlugin() {
         assertThat(plugin).isNotNull();
         assertThat(plugin.isEnabled()).isTrue();
         assertThat(DanaEventPlugin.getInstance()).isSameAs(plugin);
+
+        DatabaseManager dbManager = plugin.getDatabaseManager();
+        assertThat(dbManager).isNotNull();
+        assertThat(dbManager.isRunning()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Plugin should cleanly shut down DatabaseManager when disabled")
+    void shouldShutdownDatabaseManagerOnDisable() {
+        DatabaseManager dbManager = plugin.getDatabaseManager();
+        assertThat(dbManager).isNotNull();
+        assertThat(dbManager.isRunning()).isTrue();
+
+        MockBukkit.unmock();
+
+        assertThat(dbManager.isRunning()).isFalse();
+        assertThat(dbManager.getDataSource().isClosed()).isTrue();
+        assertThat(DanaEventPlugin.getInstance()).isNull();
     }
 }
