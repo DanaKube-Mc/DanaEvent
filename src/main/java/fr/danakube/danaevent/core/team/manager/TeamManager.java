@@ -45,10 +45,19 @@ public class TeamManager {
     private final Map<UUID, PermissionAttachment> playerAttachments = new ConcurrentHashMap<>();
 
     private final Object colorLock = new Object();
+    private TeamScoreboardManager scoreboardManager;
 
     public TeamManager(@NotNull DanaEventPlugin plugin, @NotNull TeamDatabase database) {
         this.plugin = Objects.requireNonNull(plugin, "plugin cannot be null");
         this.database = Objects.requireNonNull(database, "database cannot be null");
+    }
+
+    public @Nullable TeamScoreboardManager getScoreboardManager() {
+        return scoreboardManager;
+    }
+
+    public void setScoreboardManager(@Nullable TeamScoreboardManager scoreboardManager) {
+        this.scoreboardManager = scoreboardManager;
     }
 
     public @NotNull TeamDatabase getDatabase() {
@@ -70,6 +79,10 @@ public class TeamManager {
                 for (DanaTeam team : loaded) {
                     teams.put(team.getId(), team);
                     colorTeamMap.put(team.getColor(), team.getId());
+
+                    if (scoreboardManager != null) {
+                        scoreboardManager.registerTeam(team);
+                    }
 
                     for (UUID memberUuid : team.getMembers().keySet()) {
                         playerTeamMap.put(memberUuid, team.getId());
@@ -186,6 +199,11 @@ public class TeamManager {
                 // Apply dynamic permissions
                 applyTeamPermissions(leader, cleanId, color);
 
+                if (scoreboardManager != null) {
+                    scoreboardManager.registerTeam(team);
+                    scoreboardManager.addPlayer(team, leader);
+                }
+
                 plugin.getMessageManager().sendMessage(
                     leader,
                     "team-created",
@@ -240,6 +258,10 @@ public class TeamManager {
                 }
             }
 
+            if (scoreboardManager != null) {
+                scoreboardManager.unregisterTeam(cleanId);
+            }
+
             // Remove any pending invites referencing this team
             for (Map<String, TeamInvite> targetInvites : pendingInvites.values()) {
                 targetInvites.remove(cleanId);
@@ -279,6 +301,10 @@ public class TeamManager {
         team.setColor(newColor);
         return database.updateTeam(team)
             .thenApply(v -> {
+                if (scoreboardManager != null) {
+                    scoreboardManager.updateTeamColor(team);
+                }
+
                 // Update permissions for online members
                 for (UUID memberUuid : team.getMembers().keySet()) {
                     Player player = Bukkit.getPlayer(memberUuid);
@@ -401,6 +427,10 @@ public class TeamManager {
 
             applyTeamPermissions(player, cleanId, team.getColor());
 
+            if (scoreboardManager != null) {
+                scoreboardManager.addPlayer(team, player);
+            }
+
             // Notify team members
             for (UUID memUuid : team.getMembers().keySet()) {
                 Player p = Bukkit.getPlayer(memUuid);
@@ -501,6 +531,9 @@ public class TeamManager {
             Player target = Bukkit.getPlayer(targetUuid);
             if (target != null && target.isOnline()) {
                 removeTeamPermissions(target);
+                if (scoreboardManager != null) {
+                    scoreboardManager.removePlayer(target);
+                }
                 plugin.getMessageManager().sendMessage(
                     target,
                     "team-kicked",
@@ -549,6 +582,10 @@ public class TeamManager {
             team.removeMember(playerUuid);
             playerTeamMap.remove(playerUuid);
             removeTeamPermissions(player);
+
+            if (scoreboardManager != null) {
+                scoreboardManager.removePlayer(player);
+            }
 
             plugin.getMessageManager().sendMessage(
                 player,
@@ -610,6 +647,9 @@ public class TeamManager {
         DanaTeam team = getPlayerTeam(player.getUniqueId()).orElse(null);
         if (team != null) {
             applyTeamPermissions(player, team.getId(), team.getColor());
+            if (scoreboardManager != null) {
+                scoreboardManager.addPlayer(team, player);
+            }
         }
     }
 
@@ -637,5 +677,9 @@ public class TeamManager {
         playerTeamMap.clear();
         colorTeamMap.clear();
         pendingInvites.clear();
+
+        if (scoreboardManager != null) {
+            scoreboardManager.cleanUp();
+        }
     }
 }

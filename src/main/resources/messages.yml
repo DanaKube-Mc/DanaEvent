@@ -85,3 +85,4 @@ team-leader-left-disbanded: "<prefix> <red>Le chef d'équipe a quitté l'équipe
 team-not-found: "<prefix> <red>L'équipe demandée est introuvable.</red>"
 team-id-invalid: "<prefix> <red>L'identifiant d'équipe est invalide (3 à 32 caractères alphanumériques et tirets).</red>"
 team-id-taken: "<prefix> <red>Une équipe avec cet identifiant existe déjà.</red>"
+team-friendly-fire: "<prefix> <red>Vous ne pouvez pas blesser votre coéquipier <yellow><player></yellow> !</red>"
