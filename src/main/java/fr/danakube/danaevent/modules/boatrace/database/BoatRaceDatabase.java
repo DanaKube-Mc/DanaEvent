@@ -3,6 +3,7 @@ package fr.danakube.danaevent.modules.boatrace.database;
 import fr.danakube.danaevent.core.database.DatabaseManager;
 import fr.danakube.danaevent.core.database.StorageType;
 import fr.danakube.danaevent.modules.boatrace.model.RecordEntry;
+import org.bukkit.Material;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -22,7 +23,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.ForkJoinPool;
 
 /**
- * Handles database operations and table schema for the BoatRace module records.
+ * Handles database operations and table schema for the BoatRace module records and player preferences.
  */
 public class BoatRaceDatabase {
 
@@ -63,6 +64,13 @@ public class BoatRaceDatabase {
                     CREATE INDEX IF NOT EXISTS idx_boatrace_records_track_period_time
                     ON dana_boatrace_records (track_id, period_month, time_millis);
                 """);
+                statement.executeUpdate("""
+                    CREATE TABLE IF NOT EXISTS dana_boatrace_preferences (
+                        player_uuid VARCHAR(36) PRIMARY KEY,
+                        boat_material VARCHAR(32) NOT NULL,
+                        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    );
+                """);
             } else {
                 statement.executeUpdate("""
                     CREATE TABLE IF NOT EXISTS dana_boatrace_records (
@@ -74,6 +82,13 @@ public class BoatRaceDatabase {
                         period_month VARCHAR(32) NOT NULL,
                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                         INDEX idx_boatrace_records_track_period_time (track_id, period_month, time_millis)
+                    );
+                """);
+                statement.executeUpdate("""
+                    CREATE TABLE IF NOT EXISTS dana_boatrace_preferences (
+                        player_uuid VARCHAR(36) PRIMARY KEY,
+                        boat_material VARCHAR(32) NOT NULL,
+                        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                     );
                 """);
             }
@@ -357,4 +372,73 @@ public class BoatRaceDatabase {
     public DatabaseManager getDatabaseManager() {
         return databaseManager;
     }
+
+    /**
+     * Asynchronously retrieves the saved boat material preference for a player.
+     *
+     * @param uuid player unique identifier
+     * @return CompletableFuture containing Optional with Material, or empty if unset
+     */
+    public CompletableFuture<Optional<Material>> getPlayerBoatPreference(UUID uuid) {
+        Objects.requireNonNull(uuid, "uuid cannot be null");
+
+        return CompletableFuture.supplyAsync(() -> {
+            String sql = "SELECT boat_material FROM dana_boatrace_preferences WHERE player_uuid = ?;";
+            try (Connection connection = databaseManager.getDataSource().getConnection();
+                 PreparedStatement statement = connection.prepareStatement(sql)) {
+
+                statement.setString(1, uuid.toString());
+                try (ResultSet rs = statement.executeQuery()) {
+                    if (rs.next()) {
+                        String matName = rs.getString("boat_material");
+                        Material material = Material.matchMaterial(matName);
+                        return Optional.ofNullable(material);
+                    }
+                }
+            } catch (SQLException e) {
+                throw new CompletionException(e);
+            }
+            return Optional.empty();
+        }, asyncExecutor);
+    }
+
+    /**
+     * Asynchronously sets or updates the saved boat material preference for a player.
+     *
+     * @param uuid player unique identifier
+     * @param material preferred boat material
+     * @return CompletableFuture completing when updated
+     */
+    public CompletableFuture<Void> setPlayerBoatPreference(UUID uuid, Material material) {
+        Objects.requireNonNull(uuid, "uuid cannot be null");
+        Objects.requireNonNull(material, "material cannot be null");
+
+        return CompletableFuture.runAsync(() -> {
+            String sql;
+            if (databaseManager.getConfig().type() == StorageType.SQLITE) {
+                sql = """
+                    INSERT INTO dana_boatrace_preferences (player_uuid, boat_material, updated_at)
+                    VALUES (?, ?, CURRENT_TIMESTAMP)
+                    ON CONFLICT(player_uuid) DO UPDATE SET boat_material = excluded.boat_material, updated_at = CURRENT_TIMESTAMP;
+                """;
+            } else {
+                sql = """
+                    INSERT INTO dana_boatrace_preferences (player_uuid, boat_material, updated_at)
+                    VALUES (?, ?, CURRENT_TIMESTAMP)
+                    ON DUPLICATE KEY UPDATE boat_material = VALUES(boat_material), updated_at = CURRENT_TIMESTAMP;
+                """;
+            }
+
+            try (Connection connection = databaseManager.getDataSource().getConnection();
+                 PreparedStatement statement = connection.prepareStatement(sql)) {
+
+                statement.setString(1, uuid.toString());
+                statement.setString(2, material.name());
+                statement.executeUpdate();
+            } catch (SQLException e) {
+                throw new CompletionException(e);
+            }
+        }, asyncExecutor);
+    }
 }
+

@@ -154,6 +154,7 @@ class BoatRaceCommandTest {
             track.addSpawnPoint(new Location(world, 1, 61, 1));
 
             PlayerMock player = server.addPlayer("Racer");
+            module.getBoatSkinManager().setPreference(player.getUniqueId(), org.bukkit.Material.OAK_BOAT);
             server.dispatchCommand(player, "de br join ready_track");
 
             assertThat(module.getRaceManager().isRacing(player.getUniqueId())).isTrue();
@@ -172,6 +173,7 @@ class BoatRaceCommandTest {
             track.addSpawnPoint(new Location(world, 1, 61, 1));
 
             PlayerMock player = server.addPlayer("Racer");
+            module.getBoatSkinManager().setPreference(player.getUniqueId(), org.bukkit.Material.OAK_BOAT);
             server.dispatchCommand(player, "de br join ready_track");
             drainMessages(player);
 
@@ -204,6 +206,7 @@ class BoatRaceCommandTest {
             track.addSpawnPoint(new Location(world, 1, 61, 1));
 
             PlayerMock player = server.addPlayer("Racer");
+            module.getBoatSkinManager().setPreference(player.getUniqueId(), org.bukkit.Material.OAK_BOAT);
             server.dispatchCommand(player, "de br join ready_track");
             drainMessages(player);
 
@@ -465,6 +468,7 @@ class BoatRaceCommandTest {
 
             // 6. Virtual Racer joins the race
             PlayerMock racer = server.addPlayer("SpeedyJoe");
+            module.getBoatSkinManager().setPreference(racer.getUniqueId(), org.bukkit.Material.OAK_BOAT);
             server.dispatchCommand(racer, "de br join gp_e2e");
 
             assertThat(module.getRaceManager().isRacing(racer.getUniqueId())).isTrue();
