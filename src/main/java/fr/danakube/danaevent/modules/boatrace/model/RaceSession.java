@@ -1,5 +1,8 @@
 package fr.danakube.danaevent.modules.boatrace.model;
 
+import net.kyori.adventure.bossbar.BossBar;
+import net.kyori.adventure.text.Component;
+import org.bukkit.Material;
 import org.bukkit.entity.Boat;
 
 import java.util.ArrayList;
@@ -15,24 +18,43 @@ public class RaceSession {
 
     private final UUID playerUuid;
     private final Track track;
-    private final Boat boat;
-    private final UUID boatUuid;
-    private final long startTimeMillis;
+    private Boat boat;
+    private UUID boatUuid;
+    private long startTimeMillis;
+    private Material boatMaterial;
     private int currentLap;
     private final List<Long> lapTimes = new ArrayList<>();
     private long lastLapCrossingMillis;
     private RaceState state;
     private long finalElapsedTimeMillis = -1;
+    private final BossBar bossBar;
+    private HudType hudType;
 
     public RaceSession(UUID playerUuid, Track track, Boat boat, long startTimeMillis, RaceState state) {
+        this(playerUuid, track, boat, startTimeMillis, state, null, HudType.BOSS_BAR);
+    }
+
+    public RaceSession(UUID playerUuid, Track track, Boat boat, long startTimeMillis, RaceState state, Material boatMaterial) {
+        this(playerUuid, track, boat, startTimeMillis, state, boatMaterial, HudType.BOSS_BAR);
+    }
+
+    public RaceSession(UUID playerUuid, Track track, Boat boat, long startTimeMillis, RaceState state, Material boatMaterial, HudType hudType) {
         this.playerUuid = Objects.requireNonNull(playerUuid, "playerUuid cannot be null");
         this.track = Objects.requireNonNull(track, "track cannot be null");
         this.boat = boat;
         this.boatUuid = boat != null ? boat.getUniqueId() : null;
         this.startTimeMillis = startTimeMillis;
+        this.boatMaterial = boatMaterial;
         this.lastLapCrossingMillis = 0L;
         this.state = state != null ? state : RaceState.COUNTDOWN;
         this.currentLap = 1;
+        this.hudType = hudType != null ? hudType : HudType.BOSS_BAR;
+        this.bossBar = BossBar.bossBar(
+            Component.empty(),
+            1.0f,
+            BossBar.Color.BLUE,
+            BossBar.Overlay.PROGRESS
+        );
     }
 
     /**
@@ -90,6 +112,29 @@ public class RaceSession {
         return track;
     }
 
+    public Material getBoatMaterial() {
+        return boatMaterial;
+    }
+
+    public void setBoatMaterial(Material boatMaterial) {
+        this.boatMaterial = boatMaterial;
+    }
+
+    public void setBoat(Boat boat) {
+        this.boat = boat;
+        this.boatUuid = boat != null ? boat.getUniqueId() : null;
+    }
+
+    public void setStartTimeMillis(long startTimeMillis) {
+        this.startTimeMillis = startTimeMillis;
+    }
+
+    public void resetLaps() {
+        this.lapTimes.clear();
+        this.currentLap = 0;
+        this.lastLapCrossingMillis = 0L;
+    }
+
     public Boat getBoat() {
         return boat;
     }
@@ -139,5 +184,17 @@ public class RaceSession {
 
     public void setFinalElapsedTimeMillis(long finalElapsedTimeMillis) {
         this.finalElapsedTimeMillis = finalElapsedTimeMillis;
+    }
+
+    public BossBar getBossBar() {
+        return bossBar;
+    }
+
+    public HudType getHudType() {
+        return hudType;
+    }
+
+    public void setHudType(HudType hudType) {
+        this.hudType = hudType != null ? hudType : HudType.BOSS_BAR;
     }
 }

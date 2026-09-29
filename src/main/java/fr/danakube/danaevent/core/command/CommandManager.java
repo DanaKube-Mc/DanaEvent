@@ -37,6 +37,7 @@ public class CommandManager implements CommandExecutor, TabCompleter {
         registerCoreCommand(new ReloadCommand(plugin));
         registerCoreCommand(new ModulesCommand(plugin));
         registerCoreCommand(new WandCommand(plugin));
+        registerCoreCommand(new LeaveCommand(plugin));
     }
 
     /**

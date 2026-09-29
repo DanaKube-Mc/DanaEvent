@@ -74,7 +74,7 @@ class BoatRaceModuleTest {
         assertThat(module.getBoatSkinManager()).isNotNull();
 
         List<String> subCommandNames = module.getSubCommands().stream().map(SubCommand::getName).toList();
-        assertThat(subCommandNames).containsExactlyInAnyOrder("list", "join", "leave", "top", "boat", "admin");
+        assertThat(subCommandNames).containsExactlyInAnyOrder("list", "join", "leave", "top", "boat", "hud", "admin");
     }
 
     @Test

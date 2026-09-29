@@ -78,6 +78,16 @@ public class TrackManager {
     }
 
     /**
+     * Registers an already constructed track or replaces an existing one with the same ID.
+     *
+     * @param track the track to register
+     */
+    public void registerTrack(Track track) {
+        Objects.requireNonNull(track, "Track cannot be null");
+        tracks.put(track.getId(), track);
+    }
+
+    /**
      * Deletes a track by its identifier.
      *
      * @param id track identifier

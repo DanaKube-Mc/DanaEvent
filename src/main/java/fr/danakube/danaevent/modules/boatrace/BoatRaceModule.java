@@ -90,6 +90,7 @@ public class BoatRaceModule extends AbstractDanaModule {
             registerSubCommand(new BoatRaceLeaveCmd(plugin, this));
             registerSubCommand(new BoatRaceTopCmd(plugin, this));
             registerSubCommand(new fr.danakube.danaevent.modules.boatrace.command.BoatRaceBoatCmd(plugin, this));
+            registerSubCommand(new fr.danakube.danaevent.modules.boatrace.command.BoatRaceHudCmd(plugin, this));
             registerSubCommand(new BoatRaceAdminCmd(plugin, this));
         }
     }
