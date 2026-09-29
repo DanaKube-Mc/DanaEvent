@@ -102,4 +102,8 @@ hunt-team-step-broadcast: "<prefix> <aqua>[Équipe]</aqua> <yellow><player></yel
 hunt-not-active: "<prefix> <red>Vous ne participez à aucune chasse au trésor.</red>"
 hunt-already-participating: "<prefix> <red>Vous participez déjà à une chasse au trésor en cours.</red>"
 hunt-cancelled: "<prefix> <red>La chasse au trésor a été abandonnée.</red>"
+hunt-solo-reconnect: "<prefix> <green>Votre chasse au trésor <yellow><hunt></yellow> a été reprise (Étape <step>/<total>).</green>"
+hunt-team-reconnect: "<prefix> <green>Votre équipe participe actuellement à la chasse au trésor <yellow><hunt></yellow> (Étape <step>/<total>).</green>"
+hunt-team-disbanded-cancelled: "<prefix> <red>L'équipe ayant été dissoute, votre chasse au trésor en cours a été annulée.</red>"
+
 
