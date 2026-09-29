@@ -135,6 +135,9 @@ public class DanaEventPlugin extends JavaPlugin {
                 this.teamVisualListener,
                 this
             );
+
+            this.commandManager.registerCoreCommand(new fr.danakube.danaevent.core.team.command.TeamPlayerCmd(this, this.teamManager));
+            this.commandManager.registerCoreCommand(new fr.danakube.danaevent.core.team.command.TeamAdminCmd(this, this.teamManager));
         } catch (SQLException e) {
             getLogger().log(Level.SEVERE, "Failed to initialize Team Service database!", e);
         }
