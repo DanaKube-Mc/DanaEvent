@@ -10,8 +10,11 @@ import fr.danakube.danaevent.modules.boatrace.model.TrackType;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.World;
 import org.bukkit.entity.Boat;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Vehicle;
 
@@ -75,7 +78,7 @@ public class RaceManager {
         player.teleport(spawnLoc);
 
         // 3. Spawn boat and mount player
-        Boat boat = spawnLoc.getWorld().spawn(spawnLoc, Boat.class);
+        Boat boat = spawnBoat(spawnLoc, track.getBoatMaterial());
         boat.addPassenger(player);
 
         // 4. Configure collisions
@@ -322,5 +325,61 @@ public class RaceManager {
         if (boat != null && boat.isValid()) {
             boat.remove();
         }
+    }
+
+    /**
+     * Spawns a boat entity compatible across Paper 1.21.1 and 1.21.2+ (where boats were split into individual entity types).
+     *
+     * @param location target spawn location
+     * @param material preferred boat material (e.g. OAK_BOAT)
+     * @return the spawned Boat entity
+     */
+    private Boat spawnBoat(Location location, Material material) {
+        World world = Objects.requireNonNull(location.getWorld(), "World cannot be null");
+        String materialName = material != null ? material.name() : "OAK_BOAT";
+
+        // 1. Try spawning via matching EntityType (e.g. OAK_BOAT, SPRUCE_BOAT in 1.21.2+ / 1.21.11+)
+        try {
+            EntityType type = EntityType.valueOf(materialName);
+            Entity entity = world.spawnEntity(location, type);
+            if (entity instanceof Boat boat) {
+                return boat;
+            }
+        } catch (IllegalArgumentException ignored) {
+        }
+
+        // 2. Try default OAK_BOAT EntityType
+        try {
+            EntityType type = EntityType.valueOf("OAK_BOAT");
+            Entity entity = world.spawnEntity(location, type);
+            if (entity instanceof Boat boat) {
+                return boat;
+            }
+        } catch (IllegalArgumentException ignored) {
+        }
+
+        // 3. Try legacy BOAT EntityType
+        try {
+            EntityType type = EntityType.valueOf("BOAT");
+            Entity entity = world.spawnEntity(location, type);
+            if (entity instanceof Boat boat) {
+                return boat;
+            }
+        } catch (IllegalArgumentException ignored) {
+        }
+
+        // 4. Fallback to OakBoat class via reflection if present
+        try {
+            Class<?> oakBoatClass = Class.forName("org.bukkit.entity.boat.OakBoat");
+            if (Boat.class.isAssignableFrom(oakBoatClass)) {
+                @SuppressWarnings("unchecked")
+                Class<? extends Boat> clazz = (Class<? extends Boat>) oakBoatClass;
+                return world.spawn(location, clazz);
+            }
+        } catch (Throwable ignored) {
+        }
+
+        // 5. Ultimate fallback to Boat.class (works under MockBukkit 1.21)
+        return world.spawn(location, Boat.class);
     }
 }
