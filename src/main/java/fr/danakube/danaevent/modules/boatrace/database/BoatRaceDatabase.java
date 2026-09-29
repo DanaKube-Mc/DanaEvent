@@ -1,0 +1,168 @@
+package fr.danakube.danaevent.modules.boatrace.database;
+
+import fr.danakube.danaevent.core.database.DatabaseManager;
+import fr.danakube.danaevent.core.database.StorageType;
+import fr.danakube.danaevent.modules.boatrace.model.RecordEntry;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ForkJoinPool;
+
+/**
+ * Handles database operations and table schema for the BoatRace module records.
+ */
+public class BoatRaceDatabase {
+
+    private final DatabaseManager databaseManager;
+    private final Executor asyncExecutor;
+
+    public BoatRaceDatabase(DatabaseManager databaseManager) {
+        this(databaseManager, ForkJoinPool.commonPool());
+    }
+
+    public BoatRaceDatabase(DatabaseManager databaseManager, Executor asyncExecutor) {
+        this.databaseManager = Objects.requireNonNull(databaseManager, "DatabaseManager cannot be null");
+        this.asyncExecutor = asyncExecutor != null ? asyncExecutor : ForkJoinPool.commonPool();
+    }
+
+    /**
+     * Initializes the boatrace SQL table and indexes in SQLite and MySQL compatible syntax.
+     *
+     * @throws SQLException if a database error occurs during table creation
+     */
+    public void initTables() throws SQLException {
+        try (Connection connection = databaseManager.getDataSource().getConnection();
+             Statement statement = connection.createStatement()) {
+
+            if (databaseManager.getConfig().type() == StorageType.SQLITE) {
+                statement.executeUpdate("""
+                    CREATE TABLE IF NOT EXISTS dana_boatrace_records (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        track_id VARCHAR(64) NOT NULL,
+                        player_uuid VARCHAR(36) NOT NULL,
+                        time_millis BIGINT NOT NULL,
+                        laps INT NOT NULL,
+                        period_month VARCHAR(32) NOT NULL,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    );
+                """);
+                statement.executeUpdate("""
+                    CREATE INDEX IF NOT EXISTS idx_boatrace_records_track_period_time
+                    ON dana_boatrace_records (track_id, period_month, time_millis);
+                """);
+            } else {
+                statement.executeUpdate("""
+                    CREATE TABLE IF NOT EXISTS dana_boatrace_records (
+                        id BIGINT AUTO_INCREMENT PRIMARY KEY,
+                        track_id VARCHAR(64) NOT NULL,
+                        player_uuid VARCHAR(36) NOT NULL,
+                        time_millis BIGINT NOT NULL,
+                        laps INT NOT NULL,
+                        period_month VARCHAR(32) NOT NULL,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        INDEX idx_boatrace_records_track_period_time (track_id, period_month, time_millis)
+                    );
+                """);
+            }
+        }
+    }
+
+    /**
+     * Asynchronously inserts a new race record entry into the database.
+     *
+     * @param record the record to persist
+     * @return CompletableFuture completing when inserted
+     */
+    public CompletableFuture<Void> insertRecord(RecordEntry record) {
+        Objects.requireNonNull(record, "record cannot be null");
+
+        return CompletableFuture.runAsync(() -> {
+            String sql = """
+                INSERT INTO dana_boatrace_records (track_id, player_uuid, time_millis, laps, period_month, created_at)
+                VALUES (?, ?, ?, ?, ?, ?);
+            """;
+
+            try (Connection connection = databaseManager.getDataSource().getConnection();
+                 PreparedStatement statement = connection.prepareStatement(sql)) {
+
+                statement.setString(1, record.trackId());
+                statement.setString(2, record.playerUuid().toString());
+                statement.setLong(3, record.timeMillis());
+                statement.setInt(4, record.laps());
+                statement.setString(5, record.periodMonth());
+                statement.setTimestamp(6, Timestamp.from(record.createdAt()));
+                statement.executeUpdate();
+            } catch (SQLException e) {
+                throw new CompletionException(e);
+            }
+        }, asyncExecutor);
+    }
+
+    /**
+     * Asynchronously retrieves the top leaderboard records for a track and period,
+     * ordered by time ascending (fastest first).
+     *
+     * @param trackId track identifier
+     * @param periodMonth period key (e.g. "2026-09" or "ALL_TIME")
+     * @param limit maximum number of records to return
+     * @return CompletableFuture containing ordered list of top records
+     */
+    public CompletableFuture<List<RecordEntry>> getTopRecords(String trackId, String periodMonth, int limit) {
+        Objects.requireNonNull(trackId, "trackId cannot be null");
+        Objects.requireNonNull(periodMonth, "periodMonth cannot be null");
+        int effectiveLimit = Math.max(1, limit);
+
+        return CompletableFuture.supplyAsync(() -> {
+            String sql = """
+                SELECT id, track_id, player_uuid, time_millis, laps, period_month, created_at
+                FROM dana_boatrace_records
+                WHERE track_id = ? AND period_month = ?
+                ORDER BY time_millis ASC
+                LIMIT ?;
+            """;
+
+            List<RecordEntry> records = new ArrayList<>();
+            try (Connection connection = databaseManager.getDataSource().getConnection();
+                 PreparedStatement statement = connection.prepareStatement(sql)) {
+
+                statement.setString(1, trackId);
+                statement.setString(2, periodMonth);
+                statement.setInt(3, effectiveLimit);
+
+                try (ResultSet rs = statement.executeQuery()) {
+                    while (rs.next()) {
+                        long id = rs.getLong("id");
+                        String tId = rs.getString("track_id");
+                        UUID playerUuid = UUID.fromString(rs.getString("player_uuid"));
+                        long timeMillis = rs.getLong("time_millis");
+                        int laps = rs.getInt("laps");
+                        String pMonth = rs.getString("period_month");
+                        Timestamp ts = rs.getTimestamp("created_at");
+                        Instant createdAt = ts != null ? ts.toInstant() : Instant.now();
+
+                        records.add(new RecordEntry(id, tId, playerUuid, timeMillis, laps, pMonth, createdAt));
+                    }
+                }
+            } catch (SQLException e) {
+                throw new CompletionException(e);
+            }
+            return records;
+        }, asyncExecutor);
+    }
+
+    public DatabaseManager getDatabaseManager() {
+        return databaseManager;
+    }
+}
