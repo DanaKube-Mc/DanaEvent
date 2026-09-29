@@ -85,6 +85,11 @@ public class DanaEventPlaceholderExpansion extends PlaceholderExpansion {
             return resolveBoatRacePlaceholder(player, params.substring("boatrace_".length()));
         }
 
+        if (lower.startsWith("hunt_") || lower.startsWith("treasurehunt_")) {
+            String prefix = lower.startsWith("hunt_") ? "hunt_" : "treasurehunt_";
+            return resolveTreasureHuntPlaceholder(player, params.substring(prefix.length()));
+        }
+
         return null;
     }
 
@@ -140,6 +145,53 @@ public class DanaEventPlaceholderExpansion extends PlaceholderExpansion {
             }
             return manager.getCachedPersonalBest(trackId, player.getUniqueId())
                 .map(RecordEntry::formatTime)
+                .orElse("N/A");
+        }
+
+        return null;
+    }
+
+    private @Nullable String resolveTreasureHuntPlaceholder(OfflinePlayer player, String sub) {
+        fr.danakube.danaevent.modules.treasurehunt.manager.HuntLeaderboardManager lm =
+            fr.danakube.danaevent.modules.treasurehunt.manager.HuntLeaderboardManager.getInstance();
+        fr.danakube.danaevent.modules.treasurehunt.TreasureHuntModule thModule =
+            plugin != null ? plugin.getTreasureHuntModule() : null;
+
+        String lower = sub.toLowerCase();
+
+        // 1. %danaevent_hunt_<hunt>_progress%
+        if (lower.endsWith("_progress")) {
+            String huntId = sub.substring(0, sub.length() - "_progress".length());
+            if (player == null || !player.isOnline() || thModule == null) {
+                return "N/A";
+            }
+            Player onlinePlayer = player.getPlayer();
+            if (onlinePlayer == null) {
+                return "N/A";
+            }
+            return thModule.getProgressManager().getProgressForPlayer(onlinePlayer)
+                .filter(p -> p.getHuntId().equalsIgnoreCase(huntId))
+                .map(p -> (p.getCurrentStepIndex() + 1) + "/" + p.getStepOrder().size())
+                .orElse("N/A");
+        }
+
+        if (lm == null) {
+            return "N/A";
+        }
+
+        // 2. %danaevent_hunt_<hunt>_top1_name%
+        if (lower.endsWith("_top1_name")) {
+            String huntId = sub.substring(0, sub.length() - "_top1_name".length());
+            return lm.getCachedTop1AllTime(huntId)
+                .map(r -> lm.resolveHolderName(r.holderUuid(), r.isTeam()))
+                .orElse("N/A");
+        }
+
+        // 3. %danaevent_hunt_<hunt>_top1_time%
+        if (lower.endsWith("_top1_time")) {
+            String huntId = sub.substring(0, sub.length() - "_top1_time".length());
+            return lm.getCachedTop1AllTime(huntId)
+                .map(r -> fr.danakube.danaevent.modules.treasurehunt.model.PlayerHuntProgress.formatTime(r.timeMillis()))
                 .orElse("N/A");
         }
 

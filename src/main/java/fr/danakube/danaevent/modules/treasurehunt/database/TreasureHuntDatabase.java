@@ -44,6 +44,25 @@ public class TreasureHuntDatabase {
         this.asyncExecutor = Objects.requireNonNull(asyncExecutor, "asyncExecutor cannot be null");
     }
 
+    public DatabaseManager getDatabaseManager() {
+        return databaseManager;
+    }
+
+    public CompletableFuture<List<HuntRecord>> getTopMonthly(@NotNull String huntId, @NotNull String periodMonth, int limit) {
+        return getTopRecords(huntId, periodMonth, limit);
+    }
+
+    public CompletableFuture<List<HuntRecord>> getTopAllTime(@NotNull String huntId, int limit) {
+        return getTopRecords(huntId, "ALL_TIME", limit);
+    }
+
+    public CompletableFuture<Void> saveHuntRecord(@NotNull String huntId, @NotNull String mode, @NotNull UUID holderUuid,
+                                                  @NotNull String periodMonth, long timeMillis, long completedAtMillis) {
+        boolean isTeam = "TEAM".equalsIgnoreCase(mode);
+        HuntRecord record = new HuntRecord(0L, huntId, holderUuid, isTeam, timeMillis, periodMonth, Instant.ofEpochMilli(completedAtMillis));
+        return saveRecord(record);
+    }
+
     /**
      * Creates database tables and indexes if they do not exist.
      *
