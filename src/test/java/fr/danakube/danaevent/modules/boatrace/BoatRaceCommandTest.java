@@ -357,7 +357,17 @@ class BoatRaceCommandTest {
             module.getTrackManager().createTrack("reset_track", "Reset Track", TrackType.SPRINT, TrackMode.TIME_ATTACK_247);
             server.dispatchCommand(admin, "de br admin resetranking reset_track");
 
-            List<String> msgs = drainMessages(admin);
+            List<String> msgs = new ArrayList<>();
+            long timeout = System.currentTimeMillis() + 2000;
+            while (System.currentTimeMillis() < timeout) {
+                msgs.addAll(drainMessages(admin));
+                if (msgs.stream().anyMatch(m -> m.contains("Classement réinitialisé"))) {
+                    break;
+                }
+                try {
+                    Thread.sleep(20);
+                } catch (InterruptedException ignored) {}
+            }
             assertThat(msgs).anyMatch(m -> m.contains("Classement réinitialisé"));
         }
     }
