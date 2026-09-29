@@ -1,12 +1,15 @@
 package fr.danakube.danaevent;
 
+import fr.danakube.danaevent.core.command.CommandManager;
 import fr.danakube.danaevent.core.database.DatabaseConfig;
 import fr.danakube.danaevent.core.database.DatabaseManager;
 import fr.danakube.danaevent.core.message.MessageManager;
+import fr.danakube.danaevent.core.module.ModuleManager;
 import fr.danakube.danaevent.core.player.PlayerCrashRecoveryListener;
 import fr.danakube.danaevent.core.player.PlayerStateManager;
 import fr.danakube.danaevent.core.selection.SelectionManager;
 import fr.danakube.danaevent.core.selection.WandListener;
+import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.sql.SQLException;
@@ -19,6 +22,8 @@ public class DanaEventPlugin extends JavaPlugin {
     private MessageManager messageManager;
     private PlayerStateManager playerStateManager;
     private SelectionManager selectionManager;
+    private ModuleManager moduleManager;
+    private CommandManager commandManager;
 
     @Override
     public void onEnable() {
@@ -54,11 +59,34 @@ public class DanaEventPlugin extends JavaPlugin {
             this
         );
 
+        this.moduleManager = new ModuleManager(this);
+        this.commandManager = new CommandManager(this);
+
+        PluginCommand danaeventCmd = getCommand("danaevent");
+        if (danaeventCmd != null) {
+            danaeventCmd.setExecutor(this.commandManager);
+            danaeventCmd.setTabCompleter(this.commandManager);
+        } else {
+            getLogger().warning("Failed to register /danaevent command: not found in plugin description.");
+        }
+
+        this.moduleManager.enableAll();
+
         getLogger().info("DanaEvent Core enabled successfully.");
     }
 
     @Override
     public void onDisable() {
+        if (moduleManager != null) {
+            moduleManager.disableAll();
+            moduleManager = null;
+        }
+
+        if (commandManager != null) {
+            commandManager.cleanUp();
+            commandManager = null;
+        }
+
         if (selectionManager != null) {
             selectionManager.cleanUp();
             selectionManager = null;
@@ -98,5 +126,13 @@ public class DanaEventPlugin extends JavaPlugin {
 
     public SelectionManager getSelectionManager() {
         return selectionManager;
+    }
+
+    public ModuleManager getModuleManager() {
+        return moduleManager;
+    }
+
+    public CommandManager getCommandManager() {
+        return commandManager;
     }
 }

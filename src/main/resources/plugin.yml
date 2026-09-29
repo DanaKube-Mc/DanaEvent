@@ -7,3 +7,32 @@ description: Core infrastructure and event management engine for DanaKube networ
 
 softdepend:
   - PlaceholderAPI
+
+commands:
+  danaevent:
+    description: Commande principale du plugin DanaEvent.
+    aliases:
+      - de
+    usage: /danaevent [help|reload|modules|wand|<module>]
+
+permissions:
+  danaevent.admin:
+    description: Permission d'administration générale DanaEvent.
+    default: op
+    children:
+      danaevent.admin.help: true
+      danaevent.admin.reload: true
+      danaevent.admin.modules: true
+      danaevent.admin.wand: true
+  danaevent.admin.help:
+    description: Permet d'afficher l'aide des commandes.
+    default: op
+  danaevent.admin.reload:
+    description: Permet de recharger la configuration et les modules.
+    default: op
+  danaevent.admin.modules:
+    description: Permet de lister les modules et leurs états.
+    default: op
+  danaevent.admin.wand:
+    description: Permet de recevoir le bâton de sélection.
+    default: op
