@@ -41,6 +41,7 @@ class DanaEventPluginTest {
 
         assertThat(plugin.getMessageManager()).isNotNull();
         assertThat(plugin.getPlayerStateManager()).isNotNull();
+        assertThat(plugin.getSelectionManager()).isNotNull();
     }
 
     @Test
@@ -57,5 +58,6 @@ class DanaEventPluginTest {
         assertThat(DanaEventPlugin.getInstance()).isNull();
         assertThat(plugin.getMessageManager()).isNull();
         assertThat(plugin.getPlayerStateManager()).isNull();
+        assertThat(plugin.getSelectionManager()).isNull();
     }
 }
