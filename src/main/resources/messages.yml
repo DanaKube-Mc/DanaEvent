@@ -93,3 +93,13 @@ team-admin-color-changed: "<prefix> <green>La couleur de l'équipe <yellow><team
 team-admin-points-added: "<prefix> <green><amount> points ont été attribués à l'équipe <yellow><team></yellow> (<event>).</green>"
 team-invalid-amount: "<prefix> <red>Montant de points invalide.</red>"
 team-color-invalid: "<prefix> <red>Couleur inconnue. Choisissez parmi les 16 couleurs Minecraft officielles.</red>"
+
+# Module Chasse au Trésor (TreasureHunt)
+hunt-wrong-step: "<prefix> <gray>Ce coffre semble verrouillé par une force mystique... Ce n'est pas le moment de l'ouvrir.</gray>"
+hunt-step-completed: "<prefix> <green>Objectif accompli ! Nouvel indice débloqué.</green>"
+hunt-completed: "<prefix> <gold>Félicitations ! Vous avez terminé la chasse en <yellow><time></yellow> !</gold>"
+hunt-team-step-broadcast: "<prefix> <aqua>[Équipe]</aqua> <yellow><player></yellow> a validé l'étape <step> ! Nouvel indice débloqué !"
+hunt-not-active: "<prefix> <red>Vous ne participez à aucune chasse au trésor.</red>"
+hunt-already-participating: "<prefix> <red>Vous participez déjà à une chasse au trésor en cours.</red>"
+hunt-cancelled: "<prefix> <red>La chasse au trésor a été abandonnée.</red>"
+

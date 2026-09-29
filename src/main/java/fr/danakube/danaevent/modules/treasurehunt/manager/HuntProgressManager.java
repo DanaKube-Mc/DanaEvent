@@ -1,13 +1,16 @@
 package fr.danakube.danaevent.modules.treasurehunt.manager;
 
 import fr.danakube.danaevent.DanaEventPlugin;
+import fr.danakube.danaevent.core.team.model.DanaTeam;
 import fr.danakube.danaevent.modules.treasurehunt.config.HuntConfig;
 import fr.danakube.danaevent.modules.treasurehunt.database.TreasureHuntDatabase;
 import fr.danakube.danaevent.modules.treasurehunt.model.Hunt;
 import fr.danakube.danaevent.modules.treasurehunt.model.HuntRecord;
 import fr.danakube.danaevent.modules.treasurehunt.model.HuntStep;
 import fr.danakube.danaevent.modules.treasurehunt.model.PlayerHuntProgress;
+import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import org.bukkit.Bukkit;
+import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
@@ -61,6 +64,10 @@ public class HuntProgressManager {
         this.pathDistributor = Objects.requireNonNull(pathDistributor, "pathDistributor cannot be null");
     }
 
+    public static UUID getTeamUuid(@NotNull String teamId) {
+        return UUID.nameUUIDFromBytes(("team:" + teamId.trim().toLowerCase()).getBytes(java.nio.charset.StandardCharsets.UTF_8));
+    }
+
     public @NotNull Collection<PlayerHuntProgress> getActiveSessions() {
         return Collections.unmodifiableCollection(activeProgress.values());
     }
@@ -70,8 +77,28 @@ public class HuntProgressManager {
         return Optional.ofNullable(activeProgress.get(holderUuid));
     }
 
+    public Optional<PlayerHuntProgress> getProgressForPlayer(@NotNull Player player) {
+        Objects.requireNonNull(player, "player cannot be null");
+        PlayerHuntProgress solo = activeProgress.get(player.getUniqueId());
+        if (solo != null) {
+            return Optional.of(solo);
+        }
+        if (plugin != null && plugin.getTeamManager() != null) {
+            Optional<fr.danakube.danaevent.core.team.model.DanaTeam> teamOpt = plugin.getTeamManager().getPlayerTeam(player.getUniqueId());
+            if (teamOpt.isPresent()) {
+                UUID teamUuid = getTeamUuid(teamOpt.get().getId());
+                return Optional.ofNullable(activeProgress.get(teamUuid));
+            }
+        }
+        return Optional.empty();
+    }
+
     public boolean isParticipant(@NotNull UUID holderUuid) {
         return activeProgress.containsKey(Objects.requireNonNull(holderUuid, "holderUuid cannot be null"));
+    }
+
+    public boolean isParticipant(@NotNull Player player) {
+        return getProgressForPlayer(player).isPresent();
     }
 
     /**
@@ -180,6 +207,91 @@ public class HuntProgressManager {
     }
 
     /**
+     * Validates a step triggered by a player, resolving solo or team progress and broadcasting feedback.
+     *
+     * @param player player who triggered the step
+     * @param triggeredStepNumber 1-based step number triggered
+     * @return CompletableFuture containing StepValidationResult
+     */
+    public CompletableFuture<StepValidationResult> validateStepForPlayer(@NotNull Player player, int triggeredStepNumber) {
+        Objects.requireNonNull(player, "player cannot be null");
+        Optional<PlayerHuntProgress> progressOpt = getProgressForPlayer(player);
+        if (progressOpt.isEmpty()) {
+            return CompletableFuture.completedFuture(StepValidationResult.NOT_IN_HUNT);
+        }
+
+        PlayerHuntProgress progress = progressOpt.get();
+        UUID holderUuid = progress.getHolderUuid();
+        boolean isTeam = progress.isTeam();
+        int stepBefore = progress.getActiveStepNumber();
+
+        return validateStep(holderUuid, triggeredStepNumber).thenApply(result -> {
+            runSync(() -> {
+                if (result == StepValidationResult.STEP_ADVANCED) {
+                    if (isTeam && plugin != null && plugin.getTeamManager() != null) {
+                        for (DanaTeam team : plugin.getTeamManager().getTeams()) {
+                            if (getTeamUuid(team.getId()).equals(holderUuid)) {
+                                for (UUID memberUuid : team.getMembers().keySet()) {
+                                    Player member = Bukkit.getPlayer(memberUuid);
+                                    if (member != null && member.isOnline()) {
+                                        if (plugin.getMessageManager() != null) {
+                                            plugin.getMessageManager().sendMessage(
+                                                member,
+                                                "hunt-team-step-broadcast",
+                                                Placeholder.parsed("player", player.getName()),
+                                                Placeholder.parsed("step", String.valueOf(stepBefore))
+                                            );
+                                        }
+                                        member.playSound(member.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.2f);
+                                    }
+                                }
+                                break;
+                            }
+                        }
+                    } else {
+                        if (plugin != null && plugin.getMessageManager() != null) {
+                            plugin.getMessageManager().sendMessage(player, "hunt-step-completed");
+                        }
+                        player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.2f);
+                    }
+                } else if (result == StepValidationResult.HUNT_COMPLETED) {
+                    String formattedTime = progress.formatElapsedTime();
+                    if (isTeam && plugin != null && plugin.getTeamManager() != null) {
+                        for (DanaTeam team : plugin.getTeamManager().getTeams()) {
+                            if (getTeamUuid(team.getId()).equals(holderUuid)) {
+                                for (UUID memberUuid : team.getMembers().keySet()) {
+                                    Player member = Bukkit.getPlayer(memberUuid);
+                                    if (member != null && member.isOnline()) {
+                                        if (plugin.getMessageManager() != null) {
+                                            plugin.getMessageManager().sendMessage(
+                                                member,
+                                                "hunt-completed",
+                                                Placeholder.parsed("time", formattedTime)
+                                            );
+                                        }
+                                        member.playSound(member.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0f, 1.0f);
+                                    }
+                                }
+                                break;
+                            }
+                        }
+                    } else {
+                        if (plugin != null && plugin.getMessageManager() != null) {
+                            plugin.getMessageManager().sendMessage(
+                                player,
+                                "hunt-completed",
+                                Placeholder.parsed("time", formattedTime)
+                            );
+                        }
+                        player.playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0f, 1.0f);
+                    }
+                }
+            });
+            return result;
+        });
+    }
+
+    /**
      * Resumes an in-progress hunt for a player or team from database if orphaned.
      *
      * @param holderUuid player or team UUID
@@ -225,6 +337,20 @@ public class HuntProgressManager {
             return;
         }
 
+        if (isTeam && plugin != null && plugin.getTeamManager() != null) {
+            for (DanaTeam team : plugin.getTeamManager().getTeams()) {
+                if (getTeamUuid(team.getId()).equals(holderUuid)) {
+                    for (UUID memberUuid : team.getMembers().keySet()) {
+                        Player member = Bukkit.getPlayer(memberUuid);
+                        if (member != null && member.isOnline()) {
+                            giveReward(member, step.getRewardItem(), step.getRewardCommands());
+                        }
+                    }
+                    return;
+                }
+            }
+        }
+
         Player player = Bukkit.getPlayer(holderUuid);
         if (player != null && player.isOnline()) {
             giveReward(player, step.getRewardItem(), step.getRewardCommands());
@@ -234,6 +360,20 @@ public class HuntProgressManager {
     private void dispatchFinalRewards(UUID holderUuid, boolean isTeam, Hunt hunt) {
         if (hunt.getFinalRewardItem() == null && hunt.getFinalRewardCommands().isEmpty()) {
             return;
+        }
+
+        if (isTeam && plugin != null && plugin.getTeamManager() != null) {
+            for (DanaTeam team : plugin.getTeamManager().getTeams()) {
+                if (getTeamUuid(team.getId()).equals(holderUuid)) {
+                    for (UUID memberUuid : team.getMembers().keySet()) {
+                        Player member = Bukkit.getPlayer(memberUuid);
+                        if (member != null && member.isOnline()) {
+                            giveReward(member, hunt.getFinalRewardItem(), hunt.getFinalRewardCommands());
+                        }
+                    }
+                    return;
+                }
+            }
         }
 
         Player player = Bukkit.getPlayer(holderUuid);
@@ -253,6 +393,14 @@ public class HuntProgressManager {
         for (String cmd : commands) {
             String formatted = cmd.replace("%player%", player.getName());
             Bukkit.dispatchCommand(Bukkit.getConsoleSender(), formatted);
+        }
+    }
+
+    private void runSync(@NotNull Runnable action) {
+        if (plugin != null && plugin.isEnabled() && !Bukkit.isPrimaryThread()) {
+            Bukkit.getScheduler().runTask(plugin, action);
+        } else {
+            action.run();
         }
     }
 }
