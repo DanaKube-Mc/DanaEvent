@@ -266,6 +266,8 @@ public class TeamManager {
             for (Map<String, TeamInvite> targetInvites : pendingInvites.values()) {
                 targetInvites.remove(cleanId);
             }
+
+            Bukkit.getPluginManager().callEvent(new fr.danakube.danaevent.core.team.event.TeamDisbandEvent(team));
         });
     }
 
