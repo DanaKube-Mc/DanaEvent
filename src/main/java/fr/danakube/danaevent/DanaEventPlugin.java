@@ -1,6 +1,7 @@
 package fr.danakube.danaevent;
 
 import fr.danakube.danaevent.core.command.CommandManager;
+import fr.danakube.danaevent.core.command.SubCommand;
 import fr.danakube.danaevent.core.database.DatabaseConfig;
 import fr.danakube.danaevent.core.database.DatabaseManager;
 import fr.danakube.danaevent.core.gui.GuiListener;
@@ -14,7 +15,9 @@ import fr.danakube.danaevent.core.selection.SelectionManager;
 import fr.danakube.danaevent.core.selection.WandListener;
 import fr.danakube.danaevent.modules.boatrace.BoatRaceModule;
 import fr.danakube.danaevent.modules.boatrace.manager.BoatRaceLeaderboardManager;
+import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.PluginCommand;
+import org.bukkit.command.TabCompleter;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.sql.SQLException;
@@ -84,6 +87,17 @@ public class DanaEventPlugin extends JavaPlugin {
             danaeventCmd.setTabCompleter(this.commandManager);
         } else {
             getLogger().warning("Failed to register /danaevent command: not found in plugin description.");
+        }
+
+        PluginCommand leaveCmd = getCommand("leave");
+        if (leaveCmd != null) {
+            SubCommand leaveSub = this.commandManager.getCoreCommands().get("leave");
+            if (leaveSub instanceof CommandExecutor executor) {
+                leaveCmd.setExecutor(executor);
+            }
+            if (leaveSub instanceof TabCompleter completer) {
+                leaveCmd.setTabCompleter(completer);
+            }
         }
 
         this.moduleManager.enableAll();

@@ -216,6 +216,19 @@ public class ModuleManager {
     }
 
     /**
+     * Retrieves a module cast to the requested type.
+     *
+     * @param id module identifier or alias
+     * @param clazz expected module class
+     * @param <T> module type
+     * @return Optional containing the typed module, or empty if not found or wrong type
+     */
+    @SuppressWarnings("unchecked")
+    public <T extends DanaModule> Optional<T> getModule(String id, Class<T> clazz) {
+        return getModule(id).filter(clazz::isInstance).map(m -> (T) m);
+    }
+
+    /**
      * @return unmodifiable view of all registered modules
      */
     public Collection<DanaModule> getModules() {

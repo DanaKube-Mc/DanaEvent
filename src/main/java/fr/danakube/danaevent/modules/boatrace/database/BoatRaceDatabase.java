@@ -2,6 +2,7 @@ package fr.danakube.danaevent.modules.boatrace.database;
 
 import fr.danakube.danaevent.core.database.DatabaseManager;
 import fr.danakube.danaevent.core.database.StorageType;
+import fr.danakube.danaevent.modules.boatrace.model.HudType;
 import fr.danakube.danaevent.modules.boatrace.model.RecordEntry;
 import org.bukkit.Material;
 
@@ -13,9 +14,11 @@ import java.sql.Statement;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
@@ -71,6 +74,13 @@ public class BoatRaceDatabase {
                         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                     );
                 """);
+                statement.executeUpdate("""
+                    CREATE TABLE IF NOT EXISTS dana_boatrace_hud_preferences (
+                        player_uuid VARCHAR(36) PRIMARY KEY,
+                        hud_type VARCHAR(16) NOT NULL,
+                        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    );
+                """);
             } else {
                 statement.executeUpdate("""
                     CREATE TABLE IF NOT EXISTS dana_boatrace_records (
@@ -88,6 +98,13 @@ public class BoatRaceDatabase {
                     CREATE TABLE IF NOT EXISTS dana_boatrace_preferences (
                         player_uuid VARCHAR(36) PRIMARY KEY,
                         boat_material VARCHAR(32) NOT NULL,
+                        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    );
+                """);
+                statement.executeUpdate("""
+                    CREATE TABLE IF NOT EXISTS dana_boatrace_hud_preferences (
+                        player_uuid VARCHAR(36) PRIMARY KEY,
+                        hud_type VARCHAR(16) NOT NULL,
                         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                     );
                 """);
@@ -180,13 +197,19 @@ public class BoatRaceDatabase {
         return CompletableFuture.supplyAsync(() -> {
             String sql = """
                 SELECT id, track_id, player_uuid, time_millis, laps, period_month, created_at
-                FROM dana_boatrace_records
-                WHERE track_id = ? AND period_month = ?
-                ORDER BY time_millis ASC
+                FROM (
+                    SELECT id, track_id, player_uuid, time_millis, laps, period_month, created_at,
+                           ROW_NUMBER() OVER (PARTITION BY player_uuid ORDER BY time_millis ASC, created_at ASC, id ASC) AS rn
+                    FROM dana_boatrace_records
+                    WHERE track_id = ? AND period_month = ?
+                ) ranked
+                WHERE rn = 1
+                ORDER BY time_millis ASC, created_at ASC
                 LIMIT ?;
             """;
 
             List<RecordEntry> records = new ArrayList<>();
+            Set<UUID> seenPlayers = new HashSet<>();
             try (Connection connection = databaseManager.getDataSource().getConnection();
                  PreparedStatement statement = connection.prepareStatement(sql)) {
 
@@ -195,8 +218,11 @@ public class BoatRaceDatabase {
                 statement.setInt(3, effectiveLimit);
 
                 try (ResultSet rs = statement.executeQuery()) {
-                    while (rs.next()) {
-                        records.add(mapResultSetToRecord(rs));
+                    while (rs.next() && records.size() < effectiveLimit) {
+                        RecordEntry entry = mapResultSetToRecord(rs);
+                        if (seenPlayers.add(entry.playerUuid())) {
+                            records.add(entry);
+                        }
                     }
                 }
             } catch (SQLException e) {
@@ -208,7 +234,7 @@ public class BoatRaceDatabase {
 
     /**
      * Asynchronously retrieves the top all-time records for a track across all periods,
-     * ordered by time ascending (fastest first).
+     * ordered by time ascending (fastest first), keeping only the best time per player.
      *
      * @param trackId track identifier
      * @param limit maximum number of records to return
@@ -221,13 +247,19 @@ public class BoatRaceDatabase {
         return CompletableFuture.supplyAsync(() -> {
             String sql = """
                 SELECT id, track_id, player_uuid, time_millis, laps, period_month, created_at
-                FROM dana_boatrace_records
-                WHERE track_id = ?
-                ORDER BY time_millis ASC
+                FROM (
+                    SELECT id, track_id, player_uuid, time_millis, laps, period_month, created_at,
+                           ROW_NUMBER() OVER (PARTITION BY player_uuid ORDER BY time_millis ASC, created_at ASC, id ASC) AS rn
+                    FROM dana_boatrace_records
+                    WHERE track_id = ?
+                ) ranked
+                WHERE rn = 1
+                ORDER BY time_millis ASC, created_at ASC
                 LIMIT ?;
             """;
 
             List<RecordEntry> records = new ArrayList<>();
+            Set<UUID> seenPlayers = new HashSet<>();
             try (Connection connection = databaseManager.getDataSource().getConnection();
                  PreparedStatement statement = connection.prepareStatement(sql)) {
 
@@ -235,8 +267,11 @@ public class BoatRaceDatabase {
                 statement.setInt(2, effectiveLimit);
 
                 try (ResultSet rs = statement.executeQuery()) {
-                    while (rs.next()) {
-                        records.add(mapResultSetToRecord(rs));
+                    while (rs.next() && records.size() < effectiveLimit) {
+                        RecordEntry entry = mapResultSetToRecord(rs);
+                        if (seenPlayers.add(entry.playerUuid())) {
+                            records.add(entry);
+                        }
                     }
                 }
             } catch (SQLException e) {
@@ -434,6 +469,74 @@ public class BoatRaceDatabase {
 
                 statement.setString(1, uuid.toString());
                 statement.setString(2, material.name());
+                statement.executeUpdate();
+            } catch (SQLException e) {
+                throw new CompletionException(e);
+            }
+        }, asyncExecutor);
+    }
+
+    /**
+     * Asynchronously retrieves the saved HUD type preference for a player.
+     *
+     * @param uuid player unique identifier
+     * @return CompletableFuture containing Optional with HudType, or empty if unset
+     */
+    public CompletableFuture<Optional<HudType>> getPlayerHudPreference(UUID uuid) {
+        Objects.requireNonNull(uuid, "uuid cannot be null");
+
+        return CompletableFuture.supplyAsync(() -> {
+            String sql = "SELECT hud_type FROM dana_boatrace_hud_preferences WHERE player_uuid = ?;";
+            try (Connection connection = databaseManager.getDataSource().getConnection();
+                 PreparedStatement statement = connection.prepareStatement(sql)) {
+
+                statement.setString(1, uuid.toString());
+                try (ResultSet rs = statement.executeQuery()) {
+                    if (rs.next()) {
+                        String typeName = rs.getString("hud_type");
+                        HudType hudType = HudType.fromString(typeName);
+                        return Optional.ofNullable(hudType);
+                    }
+                }
+            } catch (SQLException e) {
+                throw new CompletionException(e);
+            }
+            return Optional.empty();
+        }, asyncExecutor);
+    }
+
+    /**
+     * Asynchronously sets or updates the saved HUD type preference for a player.
+     *
+     * @param uuid player unique identifier
+     * @param hudType preferred HUD type
+     * @return CompletableFuture completing when updated
+     */
+    public CompletableFuture<Void> setPlayerHudPreference(UUID uuid, HudType hudType) {
+        Objects.requireNonNull(uuid, "uuid cannot be null");
+        Objects.requireNonNull(hudType, "hudType cannot be null");
+
+        return CompletableFuture.runAsync(() -> {
+            String sql;
+            if (databaseManager.getConfig().type() == StorageType.SQLITE) {
+                sql = """
+                    INSERT INTO dana_boatrace_hud_preferences (player_uuid, hud_type, updated_at)
+                    VALUES (?, ?, CURRENT_TIMESTAMP)
+                    ON CONFLICT(player_uuid) DO UPDATE SET hud_type = excluded.hud_type, updated_at = CURRENT_TIMESTAMP;
+                """;
+            } else {
+                sql = """
+                    INSERT INTO dana_boatrace_hud_preferences (player_uuid, hud_type, updated_at)
+                    VALUES (?, ?, CURRENT_TIMESTAMP)
+                    ON DUPLICATE KEY UPDATE hud_type = VALUES(hud_type), updated_at = CURRENT_TIMESTAMP;
+                """;
+            }
+
+            try (Connection connection = databaseManager.getDataSource().getConnection();
+                 PreparedStatement statement = connection.prepareStatement(sql)) {
+
+                statement.setString(1, uuid.toString());
+                statement.setString(2, hudType.name());
                 statement.executeUpdate();
             } catch (SQLException e) {
                 throw new CompletionException(e);

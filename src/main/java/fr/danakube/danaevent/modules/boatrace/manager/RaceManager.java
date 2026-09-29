@@ -3,6 +3,7 @@ package fr.danakube.danaevent.modules.boatrace.manager;
 import fr.danakube.danaevent.DanaEventPlugin;
 import fr.danakube.danaevent.core.selection.CuboidRegion;
 import fr.danakube.danaevent.modules.boatrace.database.BoatRaceDatabase;
+import fr.danakube.danaevent.modules.boatrace.model.HudType;
 import fr.danakube.danaevent.modules.boatrace.model.RaceSession;
 import fr.danakube.danaevent.modules.boatrace.model.RaceState;
 import fr.danakube.danaevent.modules.boatrace.model.Track;
@@ -37,6 +38,7 @@ public class RaceManager {
     private final BoatRaceDatabase database;
     private final CollisionManager collisionManager;
     private final Map<UUID, RaceSession> activeSessions = new ConcurrentHashMap<>();
+    private final Map<UUID, HudType> playerHudPreferences = new ConcurrentHashMap<>();
     private final long debounceMillis;
 
     public RaceManager(DanaEventPlugin plugin, BoatRaceDatabase database, CollisionManager collisionManager) {
@@ -108,10 +110,16 @@ public class RaceManager {
 
         // 5. Start race session
         long startTime = System.currentTimeMillis();
-        RaceSession session = new RaceSession(playerUuid, track, boat, startTime, RaceState.RACING);
+        HudType hudType = getPlayerHudPreference(playerUuid);
+        RaceSession session = new RaceSession(playerUuid, track, boat, startTime, RaceState.RACING, materialToSpawn, hudType);
         activeSessions.put(playerUuid, session);
 
-        // 6. Notify player
+        // 6. Show BossBar if configured
+        if (hudType == HudType.BOSS_BAR || hudType == HudType.BOTH) {
+            player.showBossBar(session.getBossBar());
+        }
+
+        // 7. Notify player
         plugin.getMessageManager().sendMessage(player, "boatrace-start");
 
         return true;
@@ -190,6 +198,7 @@ public class RaceManager {
         String formatted = RaceSession.formatTime(totalTime);
 
         if (player != null && player.isOnline()) {
+            player.hideBossBar(session.getBossBar());
             plugin.getMessageManager().sendMessage(
                 player,
                 "boatrace-finish",
@@ -216,7 +225,8 @@ public class RaceManager {
     }
 
     /**
-     * Strict Anti-Cut mechanic: triggers if the player dismounts/sneaks out of the boat during a race.
+     * Handles dismount/sneak mechanic: teleports the player back to the track start,
+     * respawns their boat and places them back into it, resetting the ongoing race.
      *
      * @param player the player who exited
      * @param vehicle the vehicle exited
@@ -226,27 +236,61 @@ public class RaceManager {
             return;
         }
 
-        RaceSession session = activeSessions.remove(player.getUniqueId());
+        RaceSession session = activeSessions.get(player.getUniqueId());
         if (session == null || session.getState() != RaceState.RACING) {
             return;
         }
 
-        session.setState(RaceState.CANCELLED);
-
-        // Remove vehicle immediately
+        // Remove old vehicle immediately
         if (vehicle != null && vehicle.isValid()) {
             vehicle.remove();
         }
         removeBoat(session);
 
-        // Remove from collision manager
-        collisionManager.removePlayer(player);
+        Track track = session.getTrack();
+        Location spawnLoc = null;
+        if (track.getSpawnPoints() != null && !track.getSpawnPoints().isEmpty()) {
+            spawnLoc = track.getSpawnPoints().getFirst().clone();
+        } else if (track.getStartRegion() != null) {
+            org.bukkit.World world = Bukkit.getWorld(track.getStartRegion().getWorldName());
+            if (world != null) {
+                spawnLoc = track.getStartRegion().getCenter(world);
+            }
+        }
+        if (spawnLoc == null) {
+            spawnLoc = player.getLocation();
+        }
 
-        // Send anti-cut alert
-        plugin.getMessageManager().sendMessage(player, "boatrace-anti-cut");
+        Material materialToSpawn = session.getBoatMaterial() != null
+            ? session.getBoatMaterial()
+            : track.getBoatMaterial();
+        if (materialToSpawn == null) {
+            materialToSpawn = Material.OAK_BOAT;
+        }
 
-        // Restore player inventory and state
-        plugin.getPlayerStateManager().restore(player, true);
+        final Location targetSpawn = spawnLoc;
+        final Material finalMaterial = materialToSpawn;
+        Runnable respawnAction = () -> {
+            if (!player.isOnline()) {
+                return;
+            }
+            player.teleport(targetSpawn);
+            Boat newBoat = spawnBoat(targetSpawn, finalMaterial);
+            newBoat.addPassenger(player);
+
+            session.setBoat(newBoat);
+            session.setStartTimeMillis(System.currentTimeMillis());
+            session.resetLaps();
+            session.setState(RaceState.RACING);
+
+            plugin.getMessageManager().sendMessage(player, "boatrace-respawn-start");
+        };
+
+        if (plugin != null && plugin.isEnabled()) {
+            Bukkit.getScheduler().runTask(plugin, respawnAction);
+        } else {
+            respawnAction.run();
+        }
     }
 
     /**
@@ -271,6 +315,7 @@ public class RaceManager {
         plugin.getPlayerStateManager().restore(player, true);
 
         if (player.isOnline()) {
+            player.hideBossBar(session.getBossBar());
             plugin.getMessageManager().sendMessage(
                 player,
                 "boatrace-cancelled",
@@ -288,12 +333,61 @@ public class RaceManager {
             removeBoat(session);
             Player player = Bukkit.getPlayer(session.getPlayerUuid());
             if (player != null && player.isOnline()) {
+                player.hideBossBar(session.getBossBar());
                 collisionManager.removePlayer(player);
                 plugin.getPlayerStateManager().restore(player, true);
             }
         }
         activeSessions.clear();
         collisionManager.cleanUp();
+        playerHudPreferences.clear();
+    }
+
+    /**
+     * Retrieves the preferred HUD type for a player (cached or from database).
+     *
+     * @param uuid player unique identifier
+     * @return preferred HudType (defaults to BOSS_BAR)
+     */
+    public HudType getPlayerHudPreference(UUID uuid) {
+        if (uuid == null) {
+            return HudType.BOSS_BAR;
+        }
+        return playerHudPreferences.computeIfAbsent(uuid, k -> {
+            try {
+                return database.getPlayerHudPreference(k).join().orElse(HudType.BOSS_BAR);
+            } catch (Exception e) {
+                return HudType.BOSS_BAR;
+            }
+        });
+    }
+
+    /**
+     * Sets the preferred HUD type for a player and applies it immediately if racing.
+     *
+     * @param uuid player unique identifier
+     * @param hudType new preferred HUD type
+     */
+    public void setPlayerHudPreference(UUID uuid, HudType hudType) {
+        if (uuid == null) {
+            return;
+        }
+        HudType effectiveType = hudType != null ? hudType : HudType.BOSS_BAR;
+        playerHudPreferences.put(uuid, effectiveType);
+        database.setPlayerHudPreference(uuid, effectiveType);
+
+        RaceSession session = activeSessions.get(uuid);
+        if (session != null) {
+            session.setHudType(effectiveType);
+            Player player = Bukkit.getPlayer(uuid);
+            if (player != null && player.isOnline()) {
+                if (effectiveType == HudType.BOSS_BAR || effectiveType == HudType.BOTH) {
+                    player.showBossBar(session.getBossBar());
+                } else {
+                    player.hideBossBar(session.getBossBar());
+                }
+            }
+        }
     }
 
     /**

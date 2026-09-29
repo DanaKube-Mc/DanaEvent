@@ -2,17 +2,21 @@ package fr.danakube.danaevent.core.gui;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
+import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -268,5 +272,71 @@ public class CustomGui implements InventoryHolder {
         if (slot < 0 || slot >= size) {
             throw new IndexOutOfBoundsException("Slot " + slot + " is out of bounds for GUI size " + size);
         }
+    }
+
+    /**
+     * Deserializes a MiniMessage string into a Component with TextDecoration.ITALIC explicitly set to false,
+     * suppressing Minecraft's default italic display on item display names and lore.
+     *
+     * @param miniMessageText MiniMessage formatted string
+     * @return Component with italic disabled
+     */
+    public static Component textWithoutItalic(@Nullable String miniMessageText) {
+        if (miniMessageText == null || miniMessageText.isEmpty()) {
+            return Component.empty().decoration(TextDecoration.ITALIC, false);
+        }
+        String clean = miniMessageText.startsWith("<!italic>") ? miniMessageText : "<!italic>" + miniMessageText;
+        return MiniMessage.miniMessage().deserialize(clean).decoration(TextDecoration.ITALIC, false);
+    }
+
+    /**
+     * Ensures an existing Component has TextDecoration.ITALIC explicitly set to false.
+     *
+     * @param component source component
+     * @return component with italic set to false
+     */
+    public static Component stripItalic(@Nullable Component component) {
+        if (component == null) {
+            return Component.empty().decoration(TextDecoration.ITALIC, false);
+        }
+        return component.decoration(TextDecoration.ITALIC, false);
+    }
+
+    /**
+     * Creates an ItemStack with italic-stripped display name and lore.
+     *
+     * @param material item material
+     * @param displayName display name component
+     * @param lore list of lore components
+     * @return configured ItemStack
+     */
+    public static ItemStack createItem(@NotNull Material material, @Nullable Component displayName, @Nullable List<Component> lore) {
+        Objects.requireNonNull(material, "material cannot be null");
+        ItemStack item = new ItemStack(material);
+        ItemMeta meta = item.getItemMeta();
+        if (meta != null) {
+            if (displayName != null) {
+                meta.displayName(stripItalic(displayName));
+            }
+            if (lore != null) {
+                meta.lore(lore.stream().map(CustomGui::stripItalic).toList());
+            }
+            item.setItemMeta(meta);
+        }
+        return item;
+    }
+
+    /**
+     * Creates an ItemStack with italic-stripped display name and lore from MiniMessage strings.
+     *
+     * @param material item material
+     * @param nameMiniMessage display name MiniMessage string
+     * @param loreMiniMessage list of lore MiniMessage strings
+     * @return configured ItemStack
+     */
+    public static ItemStack createItem(@NotNull Material material, @Nullable String nameMiniMessage, @Nullable List<String> loreMiniMessage) {
+        Component name = nameMiniMessage != null ? textWithoutItalic(nameMiniMessage) : null;
+        List<Component> lore = loreMiniMessage != null ? loreMiniMessage.stream().map(CustomGui::textWithoutItalic).toList() : null;
+        return createItem(material, name, lore);
     }
 }

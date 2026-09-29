@@ -171,8 +171,8 @@ class RaceManagerTest {
     }
 
     @Test
-    @DisplayName("Should enforce strict Anti-Cut when player dismounts during race")
-    void shouldTriggerAntiCutOnDismount() {
+    @DisplayName("Should respawn player at track start and place in new boat on dismount")
+    void shouldRespawnOnDismount() {
         PlayerMock player = server.addPlayer("AntiCutRacer");
         ItemStack totem = new ItemStack(Material.TOTEM_OF_UNDYING);
         player.getInventory().addItem(totem);
@@ -185,11 +185,13 @@ class RaceManagerTest {
 
         // Dismount
         raceManager.handleDismount(player, boat);
+        server.getScheduler().performOneTick();
 
-        assertThat(raceManager.isRacing(player.getUniqueId())).isFalse();
+        assertThat(raceManager.isRacing(player.getUniqueId())).isTrue();
         assertThat(boat.isValid()).isFalse();
-        assertThat(player.getInventory().contains(Material.TOTEM_OF_UNDYING)).isTrue();
-        assertThat(collisionManager.hasPlayer(player)).isFalse();
+        assertThat(player.getVehicle()).isNotNull().isInstanceOf(Boat.class);
+        assertThat(player.getVehicle()).isNotSameAs(boat);
+        assertThat(collisionManager.hasPlayer(player)).isTrue();
     }
 
     @Test

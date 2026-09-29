@@ -10,41 +10,41 @@
 boats:
   oak:
     material: OAK_BOAT
-    name: "<green>Bateau en Chêne</green>"
+    name: "<!italic><green>Bateau en Chêne</green>"
     permission: ""
   spruce:
     material: SPRUCE_BOAT
-    name: "<dark_green>Bateau en Sapin</dark_green>"
+    name: "<!italic><dark_green>Bateau en Sapin</dark_green>"
     permission: ""
   birch:
     material: BIRCH_BOAT
-    name: "<yellow>Bateau en Bouleau</yellow>"
+    name: "<!italic><yellow>Bateau en Bouleau</yellow>"
     permission: ""
   jungle:
     material: JUNGLE_BOAT
-    name: "<gold>Bateau en Acajou</gold>"
+    name: "<!italic><gold>Bateau en Acajou</gold>"
     permission: ""
   acacia:
     material: ACACIA_BOAT
-    name: "<red>Bateau en Acacia</red>"
+    name: "<!italic><red>Bateau en Acacia</red>"
     permission: ""
   dark_oak:
     material: DARK_OAK_BOAT
-    name: "<dark_red>Bateau en Chêne Sombre</dark_red>"
+    name: "<!italic><dark_red>Bateau en Chêne Sombre</dark_red>"
     permission: ""
   mangrove:
     material: MANGROVE_BOAT
-    name: "<color:#852b2b>Bateau en Palétuvier</color>"
+    name: "<!italic><color:#852b2b>Bateau en Palétuvier</color>"
     permission: ""
   cherry:
     material: CHERRY_BOAT
-    name: "<light_purple>Bateau en Cerisier</light_purple>"
+    name: "<!italic><light_purple>Bateau en Cerisier</light_purple>"
     permission: ""
   bamboo:
     material: BAMBOO_RAFT
-    name: "<green>Radeau en Bambou</green>"
+    name: "<!italic><green>Radeau en Bambou</green>"
     permission: ""
   pale_oak:
     material: PALE_OAK_BOAT
-    name: "<white>Bateau en Chêne Pâle</white>"
+    name: "<!italic><white>Bateau en Chêne Pâle</white>"
     permission: ""

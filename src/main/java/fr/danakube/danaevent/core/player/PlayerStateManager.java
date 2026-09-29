@@ -161,6 +161,16 @@ public class PlayerStateManager {
     }
 
     /**
+     * Checks if a player has a saved state snapshot.
+     *
+     * @param uuid the player's UUID
+     * @return true if state exists, false otherwise
+     */
+    public boolean hasState(UUID uuid) {
+        return hasSnapshot(uuid);
+    }
+
+    /**
      * Retrieves a snapshot for the given UUID from memory cache or database.
      *
      * @param uuid the player's UUID
