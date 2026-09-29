@@ -1,0 +1,16 @@
+# ==============================================================================
+#                      DanaEvent - Configuration des Messages
+# ==============================================================================
+# Charte graphique : Modern DanaKube Palette (<gradient:#00c6ff:#0072ff>)
+# Format : Kyori Adventure MiniMessage (https://docs.advntr.dev/minimessage/format.html)
+# ==============================================================================
+
+# Préfixe global utilisé dans les messages
+prefix: "<gradient:#00c6ff:#0072ff><b>DanaEvent</b></gradient> <dark_gray>»</dark_gray>"
+
+# Messages globaux et erreurs de commandes
+no-permission: "<prefix> <red>Vous n'avez pas la permission d'exécuter cette commande.</red>"
+player-only: "<prefix> <red>Cette commande ne peut être exécutée que par un joueur.</red>"
+reload-success: "<prefix> <green>Configuration et messages rechargés avec succès !</green>"
+module-not-found: "<prefix> <red>Le module <yellow><module></yellow> est introuvable.</red>"
+error-generic: "<prefix> <red>Une erreur est survenue lors de l'exécution.</red>"
