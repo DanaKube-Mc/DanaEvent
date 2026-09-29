@@ -14,7 +14,13 @@ commands:
     description: Commande principale du plugin DanaEvent.
     aliases:
       - de
-    usage: /danaevent [help|reload|modules|wand|<module>]
+    usage: /danaevent [help|reload|modules|wand|leave|<module>]
+  leave:
+    description: Quitter l'événement ou la course en cours.
+    aliases:
+      - quit
+      - eventleave
+    usage: /leave
 
 permissions:
   danaevent.admin:

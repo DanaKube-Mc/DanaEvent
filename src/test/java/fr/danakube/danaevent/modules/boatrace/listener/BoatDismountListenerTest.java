@@ -59,8 +59,8 @@ class BoatDismountListenerTest {
     }
 
     @Test
-    @DisplayName("Should cancel race, destroy boat and restore inventory on VehicleExitEvent (Anti-Cut)")
-    void shouldTriggerAntiCutOnVehicleExitEvent() {
+    @DisplayName("Should respawn player at track start and place them in a new boat on VehicleExitEvent")
+    void shouldRespawnAtStartOnVehicleExitEvent() {
         PlayerMock player = server.addPlayer("Dismounter");
         player.getInventory().addItem(new ItemStack(Material.GOLDEN_APPLE, 5));
 
@@ -78,10 +78,15 @@ class BoatDismountListenerTest {
         // Fire VehicleExitEvent
         VehicleExitEvent event = new VehicleExitEvent(boat, player);
         server.getPluginManager().callEvent(event);
+        server.getScheduler().performOneTick();
 
-        assertThat(raceManager.isRacing(player.getUniqueId())).isFalse();
+        // Player is still racing, old boat removed, player placed into new boat at spawn
+        assertThat(raceManager.isRacing(player.getUniqueId())).isTrue();
         assertThat(boat.isValid()).isFalse();
-        assertThat(player.getInventory().contains(Material.GOLDEN_APPLE)).isTrue();
+        assertThat(player.getVehicle()).isNotNull().isInstanceOf(Boat.class);
+        assertThat(player.getVehicle()).isNotSameAs(boat);
+        assertThat(player.getLocation().getBlockX()).isEqualTo(1);
+        assertThat(player.getLocation().getBlockZ()).isEqualTo(1);
     }
 
     @Test
