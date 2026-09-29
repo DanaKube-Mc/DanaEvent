@@ -12,6 +12,8 @@ import fr.danakube.danaevent.core.player.PlayerCrashRecoveryListener;
 import fr.danakube.danaevent.core.player.PlayerStateManager;
 import fr.danakube.danaevent.core.selection.SelectionManager;
 import fr.danakube.danaevent.core.selection.WandListener;
+import fr.danakube.danaevent.modules.boatrace.database.BoatRaceDatabase;
+import fr.danakube.danaevent.modules.boatrace.manager.BoatRaceLeaderboardManager;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -29,6 +31,7 @@ public class DanaEventPlugin extends JavaPlugin {
     private CommandManager commandManager;
     private HookManager hookManager;
     private GuiManager guiManager;
+    private BoatRaceLeaderboardManager boatRaceLeaderboardManager;
 
     @Override
     public void onEnable() {
@@ -51,6 +54,15 @@ public class DanaEventPlugin extends JavaPlugin {
             getServer().getPluginManager().disablePlugin(this);
             return;
         }
+
+        BoatRaceDatabase boatRaceDatabase = new BoatRaceDatabase(this.databaseManager);
+        try {
+            boatRaceDatabase.initTables();
+        } catch (SQLException e) {
+            getLogger().log(Level.WARNING, "Failed to initialize boatrace database tables: " + e.getMessage(), e);
+        }
+        this.boatRaceLeaderboardManager = new BoatRaceLeaderboardManager(this, boatRaceDatabase);
+        BoatRaceLeaderboardManager.setInstance(this.boatRaceLeaderboardManager);
 
         this.playerStateManager = new PlayerStateManager(this);
         getServer().getPluginManager().registerEvents(
@@ -93,6 +105,12 @@ public class DanaEventPlugin extends JavaPlugin {
             guiManager.cleanUp();
             guiManager = null;
         }
+
+        if (boatRaceLeaderboardManager != null) {
+            boatRaceLeaderboardManager.cleanUp();
+            boatRaceLeaderboardManager = null;
+        }
+        BoatRaceLeaderboardManager.setInstance(null);
 
         if (hookManager != null) {
             hookManager.cleanUp();
@@ -164,5 +182,13 @@ public class DanaEventPlugin extends JavaPlugin {
 
     public GuiManager getGuiManager() {
         return guiManager;
+    }
+
+    public BoatRaceLeaderboardManager getBoatRaceLeaderboardManager() {
+        return boatRaceLeaderboardManager;
+    }
+
+    public void setBoatRaceLeaderboardManager(BoatRaceLeaderboardManager boatRaceLeaderboardManager) {
+        this.boatRaceLeaderboardManager = boatRaceLeaderboardManager;
     }
 }

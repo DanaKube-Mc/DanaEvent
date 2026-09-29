@@ -28,9 +28,9 @@ dependencies {
     implementation("org.xerial:sqlite-jdbc:3.46.1.0")
     implementation("com.mysql:mysql-connector-j:9.0.0")
 
-    // Optional Hooks (compileOnly)
+    // Optional Hooks (compileOnly for plugin, testImplementation for unit tests)
     compileOnly("me.clip:placeholderapi:2.11.6")
-    testCompileOnly("me.clip:placeholderapi:2.11.6")
+    testImplementation("me.clip:placeholderapi:2.11.6")
 
     // Testing Stack (TDD)
     testImplementation(platform("org.junit:junit-bom:5.11.0"))

@@ -174,8 +174,12 @@ public class RaceManager {
             );
         }
 
-        // Persist record to database asynchronously
-        database.saveRecord(session.getTrack().getId(), session.getPlayerUuid(), totalTime, session.getCurrentLap());
+        // Persist record to database asynchronously and update caches if available
+        if (plugin != null && plugin.getBoatRaceLeaderboardManager() != null) {
+            plugin.getBoatRaceLeaderboardManager().recordTime(session.getTrack().getId(), session.getPlayerUuid(), totalTime, session.getCurrentLap());
+        } else {
+            database.saveRecord(session.getTrack().getId(), session.getPlayerUuid(), totalTime, session.getCurrentLap());
+        }
 
         // Destroy boat
         removeBoat(session);
