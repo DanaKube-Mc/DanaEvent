@@ -38,6 +38,8 @@ class DanaEventPluginTest {
         DatabaseManager dbManager = plugin.getDatabaseManager();
         assertThat(dbManager).isNotNull();
         assertThat(dbManager.isRunning()).isTrue();
+
+        assertThat(plugin.getMessageManager()).isNotNull();
     }
 
     @Test
@@ -52,5 +54,6 @@ class DanaEventPluginTest {
         assertThat(dbManager.isRunning()).isFalse();
         assertThat(dbManager.getDataSource().isClosed()).isTrue();
         assertThat(DanaEventPlugin.getInstance()).isNull();
+        assertThat(plugin.getMessageManager()).isNull();
     }
 }

@@ -2,6 +2,7 @@ package fr.danakube.danaevent;
 
 import fr.danakube.danaevent.core.database.DatabaseConfig;
 import fr.danakube.danaevent.core.database.DatabaseManager;
+import fr.danakube.danaevent.core.message.MessageManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.sql.SQLException;
@@ -11,12 +12,15 @@ public class DanaEventPlugin extends JavaPlugin {
 
     private static DanaEventPlugin instance;
     private DatabaseManager databaseManager;
+    private MessageManager messageManager;
 
     @Override
     public void onEnable() {
         instance = this;
 
         saveDefaultConfig();
+
+        this.messageManager = new MessageManager(this);
 
         DatabaseConfig dbConfig = DatabaseConfig.fromConfiguration(
             getConfig().getConfigurationSection("database"),
@@ -42,6 +46,8 @@ public class DanaEventPlugin extends JavaPlugin {
             databaseManager = null;
         }
 
+        this.messageManager = null;
+
         getLogger().info("DanaEvent Core disabled successfully.");
         instance = null;
     }
@@ -52,5 +58,9 @@ public class DanaEventPlugin extends JavaPlugin {
 
     public DatabaseManager getDatabaseManager() {
         return databaseManager;
+    }
+
+    public MessageManager getMessageManager() {
+        return messageManager;
     }
 }
