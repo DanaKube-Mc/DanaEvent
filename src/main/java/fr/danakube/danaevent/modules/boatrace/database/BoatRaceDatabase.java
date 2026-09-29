@@ -14,6 +14,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
@@ -144,6 +145,19 @@ public class BoatRaceDatabase {
      * @return CompletableFuture containing ordered list of top records
      */
     public CompletableFuture<List<RecordEntry>> getTopRecords(String trackId, String periodMonth, int limit) {
+        return getTopMonthly(trackId, periodMonth, limit);
+    }
+
+    /**
+     * Asynchronously retrieves the top monthly records for a track and period,
+     * ordered by time ascending (fastest first).
+     *
+     * @param trackId track identifier
+     * @param periodMonth period key (e.g. "2026-09")
+     * @param limit maximum number of records to return
+     * @return CompletableFuture containing ordered list of top records
+     */
+    public CompletableFuture<List<RecordEntry>> getTopMonthly(String trackId, String periodMonth, int limit) {
         Objects.requireNonNull(trackId, "trackId cannot be null");
         Objects.requireNonNull(periodMonth, "periodMonth cannot be null");
         int effectiveLimit = Math.max(1, limit);
@@ -167,16 +181,7 @@ public class BoatRaceDatabase {
 
                 try (ResultSet rs = statement.executeQuery()) {
                     while (rs.next()) {
-                        long id = rs.getLong("id");
-                        String tId = rs.getString("track_id");
-                        UUID playerUuid = UUID.fromString(rs.getString("player_uuid"));
-                        long timeMillis = rs.getLong("time_millis");
-                        int laps = rs.getInt("laps");
-                        String pMonth = rs.getString("period_month");
-                        Timestamp ts = rs.getTimestamp("created_at");
-                        Instant createdAt = ts != null ? ts.toInstant() : Instant.now();
-
-                        records.add(new RecordEntry(id, tId, playerUuid, timeMillis, laps, pMonth, createdAt));
+                        records.add(mapResultSetToRecord(rs));
                     }
                 }
             } catch (SQLException e) {
@@ -184,6 +189,169 @@ public class BoatRaceDatabase {
             }
             return records;
         }, asyncExecutor);
+    }
+
+    /**
+     * Asynchronously retrieves the top all-time records for a track across all periods,
+     * ordered by time ascending (fastest first).
+     *
+     * @param trackId track identifier
+     * @param limit maximum number of records to return
+     * @return CompletableFuture containing ordered list of top records
+     */
+    public CompletableFuture<List<RecordEntry>> getTopAllTime(String trackId, int limit) {
+        Objects.requireNonNull(trackId, "trackId cannot be null");
+        int effectiveLimit = Math.max(1, limit);
+
+        return CompletableFuture.supplyAsync(() -> {
+            String sql = """
+                SELECT id, track_id, player_uuid, time_millis, laps, period_month, created_at
+                FROM dana_boatrace_records
+                WHERE track_id = ?
+                ORDER BY time_millis ASC
+                LIMIT ?;
+            """;
+
+            List<RecordEntry> records = new ArrayList<>();
+            try (Connection connection = databaseManager.getDataSource().getConnection();
+                 PreparedStatement statement = connection.prepareStatement(sql)) {
+
+                statement.setString(1, trackId);
+                statement.setInt(2, effectiveLimit);
+
+                try (ResultSet rs = statement.executeQuery()) {
+                    while (rs.next()) {
+                        records.add(mapResultSetToRecord(rs));
+                    }
+                }
+            } catch (SQLException e) {
+                throw new CompletionException(e);
+            }
+            return records;
+        }, asyncExecutor);
+    }
+
+    /**
+     * Asynchronously retrieves the player's personal best (all-time) record on a track.
+     *
+     * @param trackId track identifier
+     * @param playerUuid player UUID
+     * @return CompletableFuture containing Optional of the fastest record
+     */
+    public CompletableFuture<Optional<RecordEntry>> getPersonalBest(String trackId, UUID playerUuid) {
+        Objects.requireNonNull(trackId, "trackId cannot be null");
+        Objects.requireNonNull(playerUuid, "playerUuid cannot be null");
+
+        return CompletableFuture.supplyAsync(() -> {
+            String sql = """
+                SELECT id, track_id, player_uuid, time_millis, laps, period_month, created_at
+                FROM dana_boatrace_records
+                WHERE track_id = ? AND player_uuid = ?
+                ORDER BY time_millis ASC
+                LIMIT 1;
+            """;
+
+            try (Connection connection = databaseManager.getDataSource().getConnection();
+                 PreparedStatement statement = connection.prepareStatement(sql)) {
+
+                statement.setString(1, trackId);
+                statement.setString(2, playerUuid.toString());
+
+                try (ResultSet rs = statement.executeQuery()) {
+                    if (rs.next()) {
+                        return Optional.of(mapResultSetToRecord(rs));
+                    }
+                }
+            } catch (SQLException e) {
+                throw new CompletionException(e);
+            }
+            return Optional.empty();
+        }, asyncExecutor);
+    }
+
+    /**
+     * Asynchronously retrieves the player's monthly personal best record on a track.
+     *
+     * @param trackId track identifier
+     * @param playerUuid player UUID
+     * @param periodMonth month key (e.g. "2026-09")
+     * @return CompletableFuture containing Optional of the monthly fastest record
+     */
+    public CompletableFuture<Optional<RecordEntry>> getMonthlyPersonalBest(String trackId, UUID playerUuid, String periodMonth) {
+        Objects.requireNonNull(trackId, "trackId cannot be null");
+        Objects.requireNonNull(playerUuid, "playerUuid cannot be null");
+        Objects.requireNonNull(periodMonth, "periodMonth cannot be null");
+
+        return CompletableFuture.supplyAsync(() -> {
+            String sql = """
+                SELECT id, track_id, player_uuid, time_millis, laps, period_month, created_at
+                FROM dana_boatrace_records
+                WHERE track_id = ? AND player_uuid = ? AND period_month = ?
+                ORDER BY time_millis ASC
+                LIMIT 1;
+            """;
+
+            try (Connection connection = databaseManager.getDataSource().getConnection();
+                 PreparedStatement statement = connection.prepareStatement(sql)) {
+
+                statement.setString(1, trackId);
+                statement.setString(2, playerUuid.toString());
+                statement.setString(3, periodMonth);
+
+                try (ResultSet rs = statement.executeQuery()) {
+                    if (rs.next()) {
+                        return Optional.of(mapResultSetToRecord(rs));
+                    }
+                }
+            } catch (SQLException e) {
+                throw new CompletionException(e);
+            }
+            return Optional.empty();
+        }, asyncExecutor);
+    }
+
+    /**
+     * Asynchronously resets (deletes) ranking records for a track and optional period.
+     * If periodMonth is null, empty or "ALL", removes all records for that track.
+     *
+     * @param trackId track identifier
+     * @param periodMonth period key (e.g. "2026-09") or null/"ALL"
+     * @return CompletableFuture containing the number of deleted records
+     */
+    public CompletableFuture<Integer> resetRanking(String trackId, String periodMonth) {
+        Objects.requireNonNull(trackId, "trackId cannot be null");
+
+        return CompletableFuture.supplyAsync(() -> {
+            boolean specificMonth = periodMonth != null && !periodMonth.isBlank() && !periodMonth.equalsIgnoreCase("ALL");
+            String sql = specificMonth
+                ? "DELETE FROM dana_boatrace_records WHERE track_id = ? AND period_month = ?;"
+                : "DELETE FROM dana_boatrace_records WHERE track_id = ?;";
+
+            try (Connection connection = databaseManager.getDataSource().getConnection();
+                 PreparedStatement statement = connection.prepareStatement(sql)) {
+
+                statement.setString(1, trackId);
+                if (specificMonth) {
+                    statement.setString(2, periodMonth);
+                }
+
+                return statement.executeUpdate();
+            } catch (SQLException e) {
+                throw new CompletionException(e);
+            }
+        }, asyncExecutor);
+    }
+
+    private RecordEntry mapResultSetToRecord(ResultSet rs) throws SQLException {
+        long id = rs.getLong("id");
+        String tId = rs.getString("track_id");
+        UUID playerUuid = UUID.fromString(rs.getString("player_uuid"));
+        long timeMillis = rs.getLong("time_millis");
+        int laps = rs.getInt("laps");
+        String pMonth = rs.getString("period_month");
+        Timestamp ts = rs.getTimestamp("created_at");
+        Instant createdAt = ts != null ? ts.toInstant() : Instant.now();
+        return new RecordEntry(id, tId, playerUuid, timeMillis, laps, pMonth, createdAt);
     }
 
     public DatabaseManager getDatabaseManager() {
