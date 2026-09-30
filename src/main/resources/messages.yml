@@ -125,4 +125,28 @@ hunt-admin-reset: "<prefix> <green>Les records de la chasse <yellow><hunt></yell
 hunt-admin-no-block: "<prefix> <red>Veuillez viser un bloc valide.</red>"
 hunt-admin-no-selection: "<prefix> <red>Veuillez définir une région avec la Wand (/de wand) avant d'ajouter une zone.</red>"
 
+# Module Mouton Chromatique (ChromaticSheep)
+sheep-list-header: "<prefix> <gold><b>Arènes Mouton Chromatique disponibles :</b></gold>"
+sheep-list-entry: "<gray>•</gray> <yellow><arena></yellow> <dark_gray>-</dark_gray> <gray>Format: <white><format></white> | Score: <white><mode></white> | Moutons: <white><sheep></white> | État: <status></gray>"
+sheep-top-header: "<prefix> <gold><b>Classement - <arena> (<period>) :</b></gold>"
+sheep-top-entry: "<gold>#<rank></gold> <yellow><holder></yellow> <dark_gray>-</dark_gray> <white><score> pts</white> <gray>(<sheep> moutons)</gray>"
+sheep-top-empty: "<prefix> <gray>Aucun record enregistré pour cette arène.</gray>"
+sheep-not-found: "<prefix> <red>L'arène <yellow><arena></yellow> est introuvable.</red>"
+sheep-not-configured: "<prefix> <red>Cette arène n'est pas encore complètement configurée.</red>"
+sheep-not-in-game: "<prefix> <red>Vous ne participez à aucune partie de Mouton Chromatique.</red>"
+sheep-already-in-game: "<prefix> <red>Vous participez déjà à un événement ou à une partie en cours.</red>"
+sheep-game-already-running: "<prefix> <red>Cette arène a déjà une partie en cours.</red>"
+sheep-admin-arena-created: "<prefix> <green>Arène <yellow><arena></yellow> créée avec succès (Format: <format>, Score: <mode>).</green>"
+sheep-admin-bounds-set: "<prefix> <green>Zone de l'arène <yellow><arena></yellow> mise à jour avec la sélection active.</green>"
+sheep-admin-spawn-added: "<prefix> <green>Point de spawn joueur ajouté à l'arène <yellow><arena></yellow> (<count> au total).</green>"
+sheep-admin-spawnsheep-set: "<prefix> <green>Troupeau de moutons configuré pour l'arène <yellow><arena></yellow> (<count> moutons).</green>"
+sheep-admin-duration-set: "<prefix> <green>Durée de la manche de l'arène <yellow><arena></yellow> fixée à <duration> secondes.</green>"
+sheep-admin-game-started: "<prefix> <green>Partie lancée sur l'arène <yellow><arena></yellow> !</green>"
+sheep-admin-game-stopped: "<prefix> <green>Partie interrompue sur l'arène <yellow><arena></yellow>.</green>"
+sheep-admin-ranking-reset: "<prefix> <green>Les records de l'arène <yellow><arena></yellow> ont été réinitialisés (<count> supprimés).</green>"
+sheep-admin-no-selection: "<prefix> <red>Veuillez faire une sélection valide avec la Wand (/de wand) d'abord.</red>"
+sheep-admin-invalid-number: "<prefix> <red>Nombre invalide.</red>"
+sheep-admin-invalid-format: "<prefix> <red>Format invalide. Valeurs possibles : SOLO, TEAM.</red>"
+sheep-admin-invalid-mode: "<prefix> <red>Mode de score invalide. Valeurs possibles : FINAL_COUNT, DOMINATION, ACTION.</red>"
+
 
