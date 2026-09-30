@@ -149,4 +149,27 @@ sheep-admin-invalid-number: "<prefix> <red>Nombre invalide.</red>"
 sheep-admin-invalid-format: "<prefix> <red>Format invalide. Valeurs possibles : SOLO, TEAM.</red>"
 sheep-admin-invalid-mode: "<prefix> <red>Mode de score invalide. Valeurs possibles : FINAL_COUNT, DOMINATION, ACTION.</red>"
 
+# ========================================================
+# Messages Dé à Coudre (DAC)
+# ========================================================
+dac-list-header: "<prefix> <gradient:#00c6ff:#0072ff><b>Arènes de Dé à Coudre disponibles :</b></gradient>"
+dac-list-entry: "<gray>• <white><arena></white> (<yellow><format></yellow> | <aqua><mode></aqua>) - <status></gray>"
+dac-join-success: "<prefix> <green>Vous avez rejoint la partie de Dé à Coudre sur <white><arena></white> !</green>"
+dac-join-fail: "<prefix> <red>Impossible de rejoindre cette arène (non prête, en cours ou déjà dans un jeu).</red>"
+dac-leave-success: "<prefix> <yellow>Vous avez quitté la partie de Dé à Coudre.</yellow>"
+dac-not-in-game: "<prefix> <red>Vous n'êtes pas dans une partie de Dé à Coudre.</red>"
+dac-top-header: "<prefix> <gradient:#00c6ff:#0072ff><b>Classement Dé à Coudre (<arena>) :</b></gradient>"
+dac-top-entry: "<gray>#<rank> <yellow><holder></yellow> : <green><wins> victoire(s)</green> (<aqua><perfects> DAC parfait(s)</aqua>)</gray>"
+dac-top-empty: "<prefix> <gray>Aucun record enregistré pour cette arène.</gray>"
+dac-admin-created: "<prefix> <green>Arène de Dé à Coudre '<white><arena></white>' créée avec succès !</green>"
+dac-admin-pool-set: "<prefix> <green>Bassin d'eau configuré avec succès via votre sélection Wand !</green>"
+dac-admin-diving-set: "<prefix> <green>Plongeoir de saut configuré à votre position !</green>"
+dac-admin-lobby-set: "<prefix> <green>Lobby de rassemblement configuré à votre position !</green>"
+dac-admin-lives-set: "<prefix> <green>Nombre de vies initiales défini à <yellow><lives></yellow>.</green>"
+dac-admin-jumptime-set: "<prefix> <green>Temps de saut par joueur défini à <yellow><time></yellow>s.</green>"
+dac-admin-start-success: "<prefix> <green>Partie démarrée avec succès sur <white><arena></white> !</green>"
+dac-admin-start-fail: "<prefix> <red>Impossible de démarrer la partie (pas assez de joueurs ou arène non prête).</red>"
+dac-admin-stop-success: "<prefix> <yellow>Partie interrompue et bassin restauré sur <white><arena></white>.</yellow>"
+dac-admin-reset-ranking: "<prefix> <green>Classement réinitialisé pour l'arène <white><arena></white>.</green>"
+
 

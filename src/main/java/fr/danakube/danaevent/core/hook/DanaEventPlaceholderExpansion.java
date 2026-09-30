@@ -95,6 +95,11 @@ public class DanaEventPlaceholderExpansion extends PlaceholderExpansion {
             return resolveChromaticSheepPlaceholder(player, params.substring(prefix.length()));
         }
 
+        if (lower.startsWith("dac_") || lower.startsWith("deacoudre_")) {
+            String prefix = lower.startsWith("dac_") ? "dac_" : "deacoudre_";
+            return resolveDeACoudrePlaceholder(player, params.substring(prefix.length()));
+        }
+
         return null;
     }
 
@@ -297,4 +302,40 @@ public class DanaEventPlaceholderExpansion extends PlaceholderExpansion {
 
         return null;
     }
+
+    private @Nullable String resolveDeACoudrePlaceholder(OfflinePlayer player, String sub) {
+        var lm = fr.danakube.danaevent.modules.deacoudre.manager.DacLeaderboardManager.getInstance();
+        if (lm == null) {
+            return "N/A";
+        }
+
+        String lower = sub.toLowerCase();
+
+        // 1. %danaevent_dac_player_perfects%
+        if ("player_perfects".equals(lower)) {
+            if (player == null) {
+                return "0";
+            }
+            return String.valueOf(lm.getCachedPlayerPerfects(player.getUniqueId()));
+        }
+
+        // 2. %danaevent_dac_<arena>_top1_name%
+        if (lower.endsWith("_top1_name")) {
+            String arenaId = sub.substring(0, sub.length() - "_top1_name".length());
+            return lm.getCachedTop1Monthly(arenaId)
+                .map(r -> lm.resolveHolderName(r.holderUuid(), r.isTeam()))
+                .orElse("N/A");
+        }
+
+        // 3. %danaevent_dac_<arena>_top1_wins%
+        if (lower.endsWith("_top1_wins")) {
+            String arenaId = sub.substring(0, sub.length() - "_top1_wins".length());
+            return lm.getCachedTop1Monthly(arenaId)
+                .map(r -> String.valueOf(r.wins()))
+                .orElse("0");
+        }
+
+        return null;
+    }
 }
+

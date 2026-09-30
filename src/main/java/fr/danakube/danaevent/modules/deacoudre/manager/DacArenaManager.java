@@ -47,6 +47,11 @@ public class DacArenaManager {
         dacConfig.registerArena(arena);
     }
 
+    public void saveArena(@NotNull DacArena arena) {
+        dacConfig.registerArena(arena);
+        dacConfig.saveArenas();
+    }
+
     public void saveArenas() {
         dacConfig.saveArenas();
     }
