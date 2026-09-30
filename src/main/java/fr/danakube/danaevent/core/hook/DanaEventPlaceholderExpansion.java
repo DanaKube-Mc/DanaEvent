@@ -90,6 +90,11 @@ public class DanaEventPlaceholderExpansion extends PlaceholderExpansion {
             return resolveTreasureHuntPlaceholder(player, params.substring(prefix.length()));
         }
 
+        if (lower.startsWith("mc_") || lower.startsWith("chromaticsheep_")) {
+            String prefix = lower.startsWith("mc_") ? "mc_" : "chromaticsheep_";
+            return resolveChromaticSheepPlaceholder(player, params.substring(prefix.length()));
+        }
+
         return null;
     }
 
@@ -192,6 +197,101 @@ public class DanaEventPlaceholderExpansion extends PlaceholderExpansion {
             String huntId = sub.substring(0, sub.length() - "_top1_time".length());
             return lm.getCachedTop1AllTime(huntId)
                 .map(r -> fr.danakube.danaevent.modules.treasurehunt.model.PlayerHuntProgress.formatTime(r.timeMillis()))
+                .orElse("N/A");
+        }
+
+        return null;
+    }
+
+    private @Nullable String resolveChromaticSheepPlaceholder(OfflinePlayer player, String sub) {
+        fr.danakube.danaevent.modules.chromaticsheep.manager.SheepLeaderboardManager lm =
+            fr.danakube.danaevent.modules.chromaticsheep.manager.SheepLeaderboardManager.getInstance();
+        if (lm == null) {
+            return "N/A";
+        }
+
+        String lower = sub.toLowerCase();
+
+        // 1. %danaevent_mc_<arena>_monthly_top1_name%
+        if (lower.endsWith("_monthly_top1_name")) {
+            String arenaId = sub.substring(0, sub.length() - "_monthly_top1_name".length());
+            return lm.getCachedTop1Monthly(arenaId)
+                .map(r -> lm.resolveHolderName(r.holderUuid(), r.isTeam()))
+                .orElse("N/A");
+        }
+
+        // 2. %danaevent_mc_<arena>_monthly_top1_score%
+        if (lower.endsWith("_monthly_top1_score")) {
+            String arenaId = sub.substring(0, sub.length() - "_monthly_top1_score".length());
+            return lm.getCachedTop1Monthly(arenaId)
+                .map(r -> String.valueOf(r.scorePoints()))
+                .orElse("N/A");
+        }
+
+        // 3. %danaevent_mc_<arena>_monthly_top1_sheep%
+        if (lower.endsWith("_monthly_top1_sheep")) {
+            String arenaId = sub.substring(0, sub.length() - "_monthly_top1_sheep".length());
+            return lm.getCachedTop1Monthly(arenaId)
+                .map(r -> String.valueOf(r.sheepCount()))
+                .orElse("N/A");
+        }
+
+        // 4. %danaevent_mc_<arena>_alltime_top1_name%
+        if (lower.endsWith("_alltime_top1_name")) {
+            String arenaId = sub.substring(0, sub.length() - "_alltime_top1_name".length());
+            return lm.getCachedTop1AllTime(arenaId)
+                .map(r -> lm.resolveHolderName(r.holderUuid(), r.isTeam()))
+                .orElse("N/A");
+        }
+
+        // 5. %danaevent_mc_<arena>_alltime_top1_score%
+        if (lower.endsWith("_alltime_top1_score")) {
+            String arenaId = sub.substring(0, sub.length() - "_alltime_top1_score".length());
+            return lm.getCachedTop1AllTime(arenaId)
+                .map(r -> String.valueOf(r.scorePoints()))
+                .orElse("N/A");
+        }
+
+        // 6. %danaevent_mc_<arena>_alltime_top1_sheep%
+        if (lower.endsWith("_alltime_top1_sheep")) {
+            String arenaId = sub.substring(0, sub.length() - "_alltime_top1_sheep".length());
+            return lm.getCachedTop1AllTime(arenaId)
+                .map(r -> String.valueOf(r.sheepCount()))
+                .orElse("N/A");
+        }
+
+        // 7. %danaevent_mc_<arena>_top1_name%
+        if (lower.endsWith("_top1_name")) {
+            String arenaId = sub.substring(0, sub.length() - "_top1_name".length());
+            return lm.getCachedTop1Monthly(arenaId)
+                .map(r -> lm.resolveHolderName(r.holderUuid(), r.isTeam()))
+                .orElse("N/A");
+        }
+
+        // 8. %danaevent_mc_<arena>_top1_score%
+        if (lower.endsWith("_top1_score")) {
+            String arenaId = sub.substring(0, sub.length() - "_top1_score".length());
+            return lm.getCachedTop1Monthly(arenaId)
+                .map(r -> String.valueOf(r.scorePoints()))
+                .orElse("N/A");
+        }
+
+        // 9. %danaevent_mc_<arena>_top1_sheep%
+        if (lower.endsWith("_top1_sheep")) {
+            String arenaId = sub.substring(0, sub.length() - "_top1_sheep".length());
+            return lm.getCachedTop1Monthly(arenaId)
+                .map(r -> String.valueOf(r.sheepCount()))
+                .orElse("N/A");
+        }
+
+        // 9. %danaevent_mc_<arena>_pb%
+        if (lower.endsWith("_pb")) {
+            String arenaId = sub.substring(0, sub.length() - "_pb".length());
+            if (player == null) {
+                return "N/A";
+            }
+            return lm.getCachedPersonalBest(arenaId, player.getUniqueId())
+                .map(r -> String.valueOf(r.scorePoints()))
                 .orElse("N/A");
         }
 
