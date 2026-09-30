@@ -83,6 +83,7 @@ public class DanaEventPlugin extends JavaPlugin {
         this.moduleManager = new ModuleManager(this);
         this.moduleManager.registerModule(new BoatRaceModule(this));
         this.moduleManager.registerModule(new fr.danakube.danaevent.modules.treasurehunt.TreasureHuntModule(this));
+        this.moduleManager.registerModule(new fr.danakube.danaevent.modules.chromaticsheep.ChromaticSheepModule(this));
         this.commandManager = new CommandManager(this);
 
         this.hookManager = new HookManager(this);
@@ -286,5 +287,9 @@ public class DanaEventPlugin extends JavaPlugin {
 
     public fr.danakube.danaevent.modules.treasurehunt.TreasureHuntModule getTreasureHuntModule() {
         return moduleManager != null ? (fr.danakube.danaevent.modules.treasurehunt.TreasureHuntModule) moduleManager.getModule("treasurehunt").orElse(null) : null;
+    }
+
+    public fr.danakube.danaevent.modules.chromaticsheep.ChromaticSheepModule getChromaticSheepModule() {
+        return moduleManager != null ? (fr.danakube.danaevent.modules.chromaticsheep.ChromaticSheepModule) moduleManager.getModule("chromaticsheep").orElse(null) : null;
     }
 }
