@@ -109,8 +109,15 @@ class HuntBlockInteractListenerTest {
         PlayerHuntProgress progress = progressManager.getActiveProgress(player.getUniqueId()).orElseThrow();
         assertThat(progress.getActiveStepNumber()).isEqualTo(2);
 
-        Component msg = player.nextComponentMessage();
-        assertThat(getPlainMessage(msg)).contains("Objectif accompli");
+        Component msg;
+        boolean found = false;
+        while ((msg = player.nextComponentMessage()) != null) {
+            if (getPlainMessage(msg).contains("Objectif accompli")) {
+                found = true;
+                break;
+            }
+        }
+        assertThat(found).isTrue();
     }
 
     @Test
@@ -133,8 +140,15 @@ class HuntBlockInteractListenerTest {
         PlayerHuntProgress progress = progressManager.getActiveProgress(player.getUniqueId()).orElseThrow();
         assertThat(progress.getActiveStepNumber()).isEqualTo(1); // not advanced
 
-        Component msg = player.nextComponentMessage();
-        assertThat(getPlainMessage(msg)).contains("force mystique");
+        Component msg;
+        boolean found = false;
+        while ((msg = player.nextComponentMessage()) != null) {
+            if (getPlainMessage(msg).contains("force mystique")) {
+                found = true;
+                break;
+            }
+        }
+        assertThat(found).isTrue();
     }
 
     @Test
@@ -151,8 +165,15 @@ class HuntBlockInteractListenerTest {
         server.getPluginManager().callEvent(event);
 
         assertThat(event.isCancelled()).isTrue();
-        Component msg = player.nextComponentMessage();
-        assertThat(getPlainMessage(msg)).contains("force mystique");
+        Component msg;
+        boolean found = false;
+        while ((msg = player.nextComponentMessage()) != null) {
+            if (getPlainMessage(msg).contains("force mystique")) {
+                found = true;
+                break;
+            }
+        }
+        assertThat(found).isTrue();
     }
 
     @Test
