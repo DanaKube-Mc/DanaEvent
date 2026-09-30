@@ -105,11 +105,14 @@ class NightcoreStyleHudTest {
         PlayerMock player = server.addPlayer("Knight");
         progressManager.startHunt(player.getUniqueId(), false, "castle");
 
+        // Drain initial messages from starting the hunt
+        while (player.nextComponentMessage() != null) {}
+
         HuntHudTask hudTask = new HuntHudTask(progressManager, huntConfig);
         hudTask.run();
 
         Component actionBar = player.nextComponentMessage();
-        // MockBukkit may deliver action bar as a message or via player.nextComponentMessage()
+        // MockBukkit delivers action bar as a message or via player.nextComponentMessage()
         // If not null, assert content
         if (actionBar != null) {
             assertThat(getPlain(actionBar)).contains("CHASSE", "Dans le donjon");
