@@ -84,6 +84,7 @@ public class DanaEventPlugin extends JavaPlugin {
         this.moduleManager.registerModule(new BoatRaceModule(this));
         this.moduleManager.registerModule(new fr.danakube.danaevent.modules.treasurehunt.TreasureHuntModule(this));
         this.moduleManager.registerModule(new fr.danakube.danaevent.modules.chromaticsheep.ChromaticSheepModule(this));
+        this.moduleManager.registerModule(new fr.danakube.danaevent.modules.deacoudre.DeACoudreModule(this));
         this.commandManager = new CommandManager(this);
 
         this.hookManager = new HookManager(this);
