@@ -91,6 +91,21 @@ public class DeACoudreDatabase {
     }
 
     /**
+     * Asynchronously records or increments match stats for a player or team in an arena using current month.
+     */
+    public CompletableFuture<Void> recordMatchResult(
+        @NotNull String arenaId,
+        @NotNull UUID holderUuid,
+        boolean isTeam,
+        boolean won,
+        int successfulJumps,
+        int perfectDacs
+    ) {
+        String currentMonth = java.time.YearMonth.now().toString();
+        return recordMatchResult(arenaId, holderUuid, isTeam, won, successfulJumps, perfectDacs, currentMonth);
+    }
+
+    /**
      * Asynchronously records or increments match stats for a player or team in an arena.
      */
     public CompletableFuture<Void> recordMatchResult(
