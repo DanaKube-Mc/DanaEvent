@@ -129,16 +129,15 @@ class SheepProtectionListenerTest {
     @DisplayName("Should cancel clicking or moving PaintBrush in inventory")
     void shouldCancelInventoryClick() {
         ItemStack brush = PaintBrushItem.createItem();
-        InventoryView view = player.getOpenInventory();
+        player.getInventory().setItem(0, brush);
 
         InventoryClickEvent click = new InventoryClickEvent(
-            view,
-            InventoryType.SlotType.CONTAINER,
+            player.getOpenInventory(),
+            InventoryType.SlotType.QUICKBAR,
             0,
             ClickType.LEFT,
             InventoryAction.PICKUP_ALL
         );
-        click.setCurrentItem(brush);
 
         listener.onInventoryClick(click);
         assertThat(click.isCancelled()).isTrue();

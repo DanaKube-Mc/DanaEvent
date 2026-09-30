@@ -209,6 +209,15 @@ public class HerdManager {
     }
 
     /**
+     * Explicitly tracks a sheep UUID for an arena.
+     */
+    public void trackSheep(@NotNull String arenaId, @NotNull UUID sheepUuid) {
+        Objects.requireNonNull(arenaId, "arenaId cannot be null");
+        Objects.requireNonNull(sheepUuid, "sheepUuid cannot be null");
+        arenaSheep.computeIfAbsent(arenaId.trim().toLowerCase(), k -> ConcurrentHashMap.newKeySet()).add(sheepUuid);
+    }
+
+    /**
      * Checks if a sheep UUID is tracked as a game sheep.
      */
     public boolean isTrackedSheep(@Nullable UUID sheepUuid) {
