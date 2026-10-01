@@ -17,6 +17,7 @@ import fr.danakube.danaevent.modules.treasurehunt.model.StepTriggerType;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Location;
+import fr.danakube.danaevent.modules.treasurehunt.model.HuntRecord;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.event.block.Action;
@@ -30,6 +31,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -405,8 +407,17 @@ class HuntCommandTest {
             // 5. Hunt is completed!
             assertThat(module.getProgressManager().isParticipant(player.getUniqueId())).isFalse();
 
-            // 6. Top record is stored
-            var topList = module.getDatabase().getTopAllTime("e2e_hunt", 10).join();
+            // 6. Top record is stored (await async database persistence)
+            List<HuntRecord> topList = Collections.emptyList();
+            for (int i = 0; i < 50; i++) {
+                topList = module.getDatabase().getTopAllTime("e2e_hunt", 10).join();
+                if (!topList.isEmpty()) {
+                    break;
+                }
+                try {
+                    Thread.sleep(50);
+                } catch (InterruptedException ignored) {}
+            }
             assertThat(topList).hasSize(1);
             assertThat(topList.get(0).holderUuid()).isEqualTo(player.getUniqueId());
         }
