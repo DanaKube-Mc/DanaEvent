@@ -351,6 +351,7 @@ class HuntCommandTest {
             assertThat(top1Time).isEqualTo("N/A");
 
             // Save record and check top1
+            module.getLeaderboardManager().registerHolderName(player.getUniqueId(), "PapiPlayer");
             module.getDatabase().saveHuntRecord("papi_hunt", "SOLO", player.getUniqueId(),
                 "2026-09", 42150L, System.currentTimeMillis()).join();
             module.getLeaderboardManager().invalidateCache("papi_hunt");

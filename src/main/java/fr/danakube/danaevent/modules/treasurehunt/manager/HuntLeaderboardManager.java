@@ -129,15 +129,16 @@ public class HuntLeaderboardManager {
     public CompletableFuture<List<HuntRecord>> getTopMonthly(@NotNull String huntId, @NotNull String periodMonth, int limit) {
         Objects.requireNonNull(huntId, "huntId cannot be null");
         Objects.requireNonNull(periodMonth, "periodMonth cannot be null");
+        String cleanId = huntId.trim().toLowerCase();
         int effectiveLimit = Math.max(1, limit);
-        String cacheKey = huntId + ":" + periodMonth;
+        String cacheKey = cleanId + ":" + periodMonth;
 
         CachedRecords cached = monthlyCache.get(cacheKey);
         if (cached != null && !cached.isExpired(cacheTtlMillis)) {
             return CompletableFuture.completedFuture(slice(cached.records(), effectiveLimit));
         }
 
-        return database.getTopMonthly(huntId, periodMonth, Math.max(effectiveLimit, 50))
+        return database.getTopMonthly(cleanId, periodMonth, Math.max(effectiveLimit, 50))
             .thenApply(records -> {
                 monthlyCache.put(cacheKey, new CachedRecords(records, System.currentTimeMillis()));
                 return slice(records, effectiveLimit);
@@ -146,16 +147,17 @@ public class HuntLeaderboardManager {
 
     public CompletableFuture<List<HuntRecord>> getTopAllTime(@NotNull String huntId, int limit) {
         Objects.requireNonNull(huntId, "huntId cannot be null");
+        String cleanId = huntId.trim().toLowerCase();
         int effectiveLimit = Math.max(1, limit);
 
-        CachedRecords cached = allTimeCache.get(huntId);
+        CachedRecords cached = allTimeCache.get(cleanId);
         if (cached != null && !cached.isExpired(cacheTtlMillis)) {
             return CompletableFuture.completedFuture(slice(cached.records(), effectiveLimit));
         }
 
-        return database.getTopAllTime(huntId, Math.max(effectiveLimit, 50))
+        return database.getTopAllTime(cleanId, Math.max(effectiveLimit, 50))
             .thenApply(records -> {
-                allTimeCache.put(huntId, new CachedRecords(records, System.currentTimeMillis()));
+                allTimeCache.put(cleanId, new CachedRecords(records, System.currentTimeMillis()));
                 return slice(records, effectiveLimit);
             });
     }
@@ -163,14 +165,15 @@ public class HuntLeaderboardManager {
     public CompletableFuture<Optional<HuntRecord>> getPersonalBest(@NotNull String huntId, @NotNull UUID holderUuid) {
         Objects.requireNonNull(huntId, "huntId cannot be null");
         Objects.requireNonNull(holderUuid, "holderUuid cannot be null");
-        String cacheKey = huntId + ":" + holderUuid + ":ALL";
+        String cleanId = huntId.trim().toLowerCase();
+        String cacheKey = cleanId + ":" + holderUuid + ":ALL";
 
         CachedPb cached = pbCache.get(cacheKey);
         if (cached != null && !cached.isExpired(cacheTtlMillis)) {
             return CompletableFuture.completedFuture(cached.record());
         }
 
-        return database.getPersonalBest(huntId, holderUuid)
+        return database.getPersonalBest(cleanId, holderUuid)
             .thenApply(opt -> {
                 pbCache.put(cacheKey, new CachedPb(opt, System.currentTimeMillis()));
                 return opt;
@@ -212,9 +215,10 @@ public class HuntLeaderboardManager {
 
     public CompletableFuture<Integer> resetRanking(@NotNull String huntId, @Nullable String periodMonth) {
         Objects.requireNonNull(huntId, "huntId cannot be null");
-        return database.resetRanking(huntId, periodMonth)
+        String cleanId = huntId.trim().toLowerCase();
+        return database.resetRanking(cleanId, periodMonth)
             .thenApply(deleted -> {
-                invalidateCache(huntId);
+                invalidateCache(cleanId);
                 return deleted;
             });
     }
@@ -223,9 +227,10 @@ public class HuntLeaderboardManager {
         if (huntId == null) {
             return;
         }
-        allTimeCache.remove(huntId);
-        monthlyCache.keySet().removeIf(k -> k.startsWith(huntId + ":"));
-        pbCache.keySet().removeIf(k -> k.startsWith(huntId + ":"));
+        String cleanId = huntId.trim().toLowerCase();
+        allTimeCache.remove(cleanId);
+        monthlyCache.keySet().removeIf(k -> k.startsWith(cleanId + ":"));
+        pbCache.keySet().removeIf(k -> k.startsWith(cleanId + ":"));
     }
 
     public void invalidateAll() {
